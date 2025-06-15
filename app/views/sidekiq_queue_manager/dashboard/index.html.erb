@@ -1,0 +1,208 @@
+<!-- Theme Toggle Button -->
+<button id="sqm-theme-toggle" class="sqm-theme-toggle" aria-label="Toggle theme" title="Toggle dark/light mode">
+  <svg class="sqm-theme-icon-light" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1rem; height: 1rem;">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636a9 9 0 1011.314 0z" />
+  </svg>
+  <svg class="sqm-theme-icon-dark sqm-hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1rem; height: 1rem;">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+  </svg>
+</button>
+
+<!-- Global Statistics -->
+<section class="sqm-stats-section" aria-label="Global Statistics">
+  <div class="sqm-stats-grid">
+    <div class="sqm-stat-card">
+      <div class="sqm-stat-label">Processed Jobs</div>
+      <div class="sqm-stat-value" id="sqm-processed">0</div>
+    </div>
+
+    <div class="sqm-stat-card">
+      <div class="sqm-stat-label">Failed Jobs</div>
+      <div class="sqm-stat-value" id="sqm-failed">0</div>
+    </div>
+
+    <div class="sqm-stat-card">
+      <div class="sqm-stat-label">Active Workers</div>
+      <div class="sqm-stat-value" id="sqm-busy">0</div>
+    </div>
+
+    <div class="sqm-stat-card">
+      <div class="sqm-stat-label">Enqueued Jobs</div>
+      <div class="sqm-stat-value" id="sqm-enqueued">0</div>
+    </div>
+  </div>
+</section>
+
+<!-- Controls Panel -->
+<section class="sqm-controls-section" aria-label="Queue Controls">
+  <div class="sqm-controls">
+    <div class="sqm-controls-left">
+      <!-- Live Pull Toggle -->
+      <div class="sqm-live-pull-container">
+        <div class="sqm-live-pull-toggle">
+          <svg class="sqm-live-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+          </svg>
+          <span class="sqm-toggle-text">Live Pull (5s)</span>
+          <div class="sqm-live-status">
+            <div class="sqm-status-dot"></div>
+            <span class="sqm-status-text">OFF</span>
+          </div>
+        </div>
+        <button id="sqm-live-toggle-btn" class="sqm-toggle-switch" data-enabled="false" aria-label="Toggle live updates">
+          <div class="sqm-toggle-thumb">
+            <svg class="sqm-toggle-icon sqm-toggle-icon-off" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <svg class="sqm-toggle-icon sqm-toggle-icon-on" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+          </div>
+        </button>
+      </div>
+
+      <!-- Manual Refresh -->
+      <div class="sqm-refresh-container">
+        <button id="sqm-refresh-btn" class="sqm-refresh-button" title="Manual refresh" aria-label="Manually refresh queue data">
+          <svg class="sqm-refresh-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+          </svg>
+          <span>Refresh</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="sqm-controls-right">
+      <!-- Bulk Actions -->
+      <button id="sqm-pause-all-btn" class="sqm-btn sqm-btn-warning" title="Pause all non-critical queues">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1rem; height: 1rem;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />
+        </svg>
+        Pause All
+      </button>
+
+      <button id="sqm-resume-all-btn" class="sqm-btn sqm-btn-success" title="Resume all paused queues">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1rem; height: 1rem;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+        </svg>
+        Resume All
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- Queue Statistics Summary -->
+<section class="sqm-queue-summary" aria-label="Queue Summary">
+  <div class="sqm-stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+    <div class="sqm-stat-card">
+      <div class="sqm-stat-label">Total Queues</div>
+      <div class="sqm-stat-value" id="sqm-total-queues">0</div>
+    </div>
+
+    <div class="sqm-stat-card">
+      <div class="sqm-stat-label">Paused Queues</div>
+      <div class="sqm-stat-value" id="sqm-paused-queues">0</div>
+    </div>
+
+    <div class="sqm-stat-card">
+      <div class="sqm-stat-label">Total Jobs</div>
+      <div class="sqm-stat-value" id="sqm-total-jobs">0</div>
+    </div>
+  </div>
+</section>
+
+<!-- Loading State -->
+<div id="sqm-loading" class="sqm-loading">
+  <div class="sqm-loading-spinner" aria-hidden="true"></div>
+  <div class="sqm-loading-text">Loading queue data...</div>
+</div>
+
+<!-- Error State -->
+<div id="sqm-error" class="sqm-error sqm-hidden">
+  <svg class="sqm-error-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+  </svg>
+  <h2 class="sqm-error-title">Failed to Load Queue Data</h2>
+  <p class="sqm-error-message" id="sqm-error-message">An error occurred while loading the queue information.</p>
+  <button id="sqm-retry-btn" class="sqm-btn sqm-btn-primary">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1rem; height: 1rem;">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+    </svg>
+    Retry
+  </button>
+</div>
+
+<!-- Main Content -->
+<div id="sqm-content" class="sqm-hidden">
+  <!-- Queues Table -->
+  <section class="sqm-queues-section" aria-label="Queue Details">
+    <div class="sqm-table-container">
+      <table class="sqm-table" id="sqm-queues-table">
+        <thead>
+          <tr>
+            <th scope="col">Queue Name</th>
+            <th scope="col" style="text-align: right;">Size</th>
+            <th scope="col" style="text-align: right;">Workers/Limits</th>
+            <th scope="col" style="text-align: right;">Latency</th>
+            <th scope="col" style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="sqm-table-body">
+          <!-- Queue rows will be inserted here by JavaScript -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<!-- Empty State (when no queues) -->
+<div id="sqm-empty-state" class="sqm-hidden" style="text-align: center; padding: 3rem 2rem; color: var(--sqm-muted-foreground);">
+  <svg style="width: 4rem; height: 4rem; margin-bottom: 1rem; color: var(--sqm-muted-foreground);" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M12 17.25h8.25M3.75 17.25h.01v.01h-.01v-.01ZM7.5 17.25h.01v.01H7.5v-.01ZM11.25 17.25h.01v.01h-.01v-.01Z" />
+  </svg>
+  <h2 style="font-size: 1.25rem; font-weight: 600; color: var(--sqm-muted-foreground); margin-bottom: 1rem;">No Queues Found</h2>
+  <p style="font-size: 0.875rem; margin-bottom: 2rem; line-height: 1.5;">
+    No Sidekiq queues were discovered. Make sure Sidekiq is properly configured and has processed jobs.
+  </p>
+  <button id="sqm-refresh-empty" class="sqm-btn sqm-btn-primary">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1rem; height: 1rem;">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+    </svg>
+    Check Again
+  </button>
+</div>
+
+<!-- Accessibility Announcements -->
+<div id="sqm-announcements" class="sqm-sr-only" aria-live="polite" aria-atomic="true"></div>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Sidekiq Queue Manager",
+  "description": "Professional Sidekiq queue monitoring and management interface",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Web Browser",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+}
+</script>
+
+<!-- Initial Data Script -->
+<% if @initial_metrics %>
+<script type="text/javascript">
+  // Provide initial data to reduce initial loading time
+  window.SidekiqQueueManagerInitialData = <%= @initial_metrics.to_json.html_safe %>;
+</script>
+<% end %>
+
+<!-- Configuration Display (for debugging in development) -->
+<% if Rails.env.development? %>
+<details style="margin-top: 2rem; padding: 1rem; background: var(--sqm-card); border: 1px solid var(--sqm-border); border-radius: var(--sqm-radius); font-family: var(--sqm-font-mono); font-size: 0.75rem;">
+  <summary style="cursor: pointer; font-weight: 600; color: var(--sqm-muted-foreground);">🔧 Development Configuration</summary>
+  <pre style="margin-top: 1rem; white-space: pre-wrap; color: var(--sqm-muted-foreground); font-size: 0.6875rem;"><%= @configuration.to_yaml if @configuration %></pre>
+</details>
+<% end %>

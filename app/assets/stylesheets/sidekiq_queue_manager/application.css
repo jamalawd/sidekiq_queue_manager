@@ -1,0 +1,1018 @@
+/*
+ * Sidekiq Queue Manager - shadcn-Inspired Professional Interface
+ *
+ * A comprehensive stylesheet for the Sidekiq Queue Manager gem
+ * Inspired by shadcn/ui design principles: minimal, accessible, beautiful
+ *
+ * Version: 2.0.0 (Redesigned)
+ * Design Philosophy: Compact minimalism with perfect dark/light mode
+ *
+ *= require_self
+ *= require sidekiq_queue_manager/modals
+ */
+
+/* ========================================
+   Design System Foundation - shadcn Inspired
+   ======================================== */
+
+:root {
+  /* ===== Color System - Light Mode ===== */
+  --sqm-background: hsl(0 0% 100%);
+  --sqm-foreground: hsl(222.2 84% 4.9%);
+
+  --sqm-card: hsl(0 0% 100%);
+  --sqm-card-foreground: hsl(222.2 84% 4.9%);
+
+  --sqm-popover: hsl(0 0% 100%);
+  --sqm-popover-foreground: hsl(222.2 84% 4.9%);
+
+  --sqm-primary: hsl(221.2 83.2% 53.3%);
+  --sqm-primary-foreground: hsl(210 40% 98%);
+
+  --sqm-secondary: hsl(210 40% 96%);
+  --sqm-secondary-foreground: hsl(222.2 84% 4.9%);
+
+  --sqm-muted: hsl(210 40% 96%);
+  --sqm-muted-foreground: hsl(215.4 16.3% 46.9%);
+
+  --sqm-accent: hsl(210 40% 96%);
+  --sqm-accent-foreground: hsl(222.2 84% 4.9%);
+
+  --sqm-destructive: hsl(0 84.2% 60.2%);
+  --sqm-destructive-foreground: hsl(210 40% 98%);
+
+  --sqm-border: hsl(214.3 31.8% 91.4%);
+  --sqm-input: hsl(214.3 31.8% 91.4%);
+  --sqm-ring: hsl(221.2 83.2% 53.3%);
+
+  /* ===== Semantic Colors ===== */
+  --sqm-success: hsl(142.1 76.2% 36.3%);
+  --sqm-success-foreground: hsl(355.7 100% 97.3%);
+  --sqm-warning: hsl(32.8 95% 44%);
+  --sqm-warning-foreground: hsl(355.7 100% 97.3%);
+  --sqm-info: hsl(199.1 89.1% 48%);
+  --sqm-info-foreground: hsl(355.7 100% 97.3%);
+
+  /* ===== Typography Scale ===== */
+  --sqm-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --sqm-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  /* ===== Spacing & Sizing ===== */
+  --sqm-radius: 0.5rem;
+  --sqm-radius-sm: 0.375rem;
+  --sqm-radius-lg: 0.75rem;
+  --sqm-radius-xl: 1rem;
+
+  /* ===== Shadows - Refined ===== */
+  --sqm-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --sqm-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --sqm-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --sqm-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  /* ===== Animation & Transitions ===== */
+  --sqm-transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --sqm-transition-fast: all 100ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ===== Z-index Scale ===== */
+  --sqm-z-dropdown: 1000;
+  --sqm-z-sticky: 1020;
+  --sqm-z-modal: 1050;
+  --sqm-z-notification: 1100;
+}
+
+/* ===== Dark Mode Variables ===== */
+[data-theme="dark"] {
+  --sqm-background: hsl(222.2 84% 4.9%);
+  --sqm-foreground: hsl(210 40% 98%);
+
+  --sqm-card: hsl(222.2 84% 4.9%);
+  --sqm-card-foreground: hsl(210 40% 98%);
+
+  --sqm-popover: hsl(222.2 84% 4.9%);
+  --sqm-popover-foreground: hsl(210 40% 98%);
+
+  --sqm-primary: hsl(217.2 91.2% 59.8%);
+  --sqm-primary-foreground: hsl(222.2 84% 4.9%);
+
+  --sqm-secondary: hsl(217.2 32.6% 17.5%);
+  --sqm-secondary-foreground: hsl(210 40% 98%);
+
+  --sqm-muted: hsl(217.2 32.6% 17.5%);
+  --sqm-muted-foreground: hsl(215 20.2% 65.1%);
+
+  --sqm-accent: hsl(217.2 32.6% 17.5%);
+  --sqm-accent-foreground: hsl(210 40% 98%);
+
+  --sqm-destructive: hsl(0 62.8% 30.6%);
+  --sqm-destructive-foreground: hsl(210 40% 98%);
+
+  --sqm-border: hsl(217.2 32.6% 17.5%);
+  --sqm-input: hsl(217.2 32.6% 17.5%);
+  --sqm-ring: hsl(224.3 76.3% 94.1%);
+
+  /* Dark mode semantic colors */
+  --sqm-success: hsl(142.1 70.6% 45.3%);
+  --sqm-warning: hsl(32.8 95% 60%);
+  --sqm-info: hsl(199.1 89.1% 60%);
+}
+
+/* ===== Auto Theme Detection ===== */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --sqm-background: hsl(222.2 84% 4.9%);
+    --sqm-foreground: hsl(210 40% 98%);
+    --sqm-card: hsl(222.2 84% 4.9%);
+    --sqm-card-foreground: hsl(210 40% 98%);
+    --sqm-popover: hsl(222.2 84% 4.9%);
+    --sqm-popover-foreground: hsl(210 40% 98%);
+    --sqm-primary: hsl(217.2 91.2% 59.8%);
+    --sqm-primary-foreground: hsl(222.2 84% 4.9%);
+    --sqm-secondary: hsl(217.2 32.6% 17.5%);
+    --sqm-secondary-foreground: hsl(210 40% 98%);
+    --sqm-muted: hsl(217.2 32.6% 17.5%);
+    --sqm-muted-foreground: hsl(215 20.2% 65.1%);
+    --sqm-accent: hsl(217.2 32.6% 17.5%);
+    --sqm-accent-foreground: hsl(210 40% 98%);
+    --sqm-destructive: hsl(0 62.8% 30.6%);
+    --sqm-destructive-foreground: hsl(210 40% 98%);
+    --sqm-border: hsl(217.2 32.6% 17.5%);
+    --sqm-input: hsl(217.2 32.6% 17.5%);
+    --sqm-ring: hsl(224.3 76.3% 94.1%);
+    --sqm-success: hsl(142.1 70.6% 45.3%);
+    --sqm-warning: hsl(32.8 95% 60%);
+    --sqm-info: hsl(199.1 89.1% 60%);
+  }
+}
+
+/* ========================================
+   Base Styles & Layout
+   ======================================== */
+
+* {
+  box-sizing: border-box;
+}
+
+.sidekiq-queue-manager {
+  font-family: var(--sqm-font-sans);
+  background: var(--sqm-background);
+  color: var(--sqm-foreground);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: var(--sqm-transition);
+}
+
+.sqm-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+/* ========================================
+   Header - Compact & Clean
+   ======================================== */
+
+.sqm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--sqm-border);
+}
+
+.sqm-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--sqm-foreground);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.sqm-subtitle {
+  font-size: 0.875rem;
+  color: var(--sqm-muted-foreground);
+  margin: 0.25rem 0 0 0;
+}
+
+.sqm-header-info {
+  text-align: right;
+  font-size: 0.75rem;
+  color: var(--sqm-muted-foreground);
+}
+
+/* Theme Toggle Button */
+.sqm-theme-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: var(--sqm-z-sticky);
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--sqm-radius);
+  border: 1px solid var(--sqm-border);
+  background: var(--sqm-background);
+  color: var(--sqm-foreground);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--sqm-transition);
+  box-shadow: var(--sqm-shadow-sm);
+}
+
+.sqm-theme-toggle:hover {
+  background: var(--sqm-accent);
+  box-shadow: var(--sqm-shadow);
+}
+
+/* ========================================
+   Statistics Grid - Compact Cards
+   ======================================== */
+
+.sqm-stats-section {
+  margin-bottom: 1.5rem;
+}
+
+.sqm-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.sqm-stat-card {
+  background: var(--sqm-card);
+  border: 1px solid var(--sqm-border);
+  border-radius: var(--sqm-radius);
+  padding: 1rem;
+  transition: var(--sqm-transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.sqm-stat-card:hover {
+  box-shadow: var(--sqm-shadow-md);
+}
+
+.sqm-stat-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--sqm-muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.sqm-stat-value {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--sqm-foreground);
+  font-family: var(--sqm-font-mono);
+  line-height: 1;
+}
+
+/* ========================================
+   Controls Panel - Clean & Minimal
+   ======================================== */
+
+.sqm-controls-section {
+  margin-bottom: 1.5rem;
+}
+
+.sqm-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--sqm-card);
+  border: 1px solid var(--sqm-border);
+  border-radius: var(--sqm-radius);
+  flex-wrap: wrap;
+}
+
+.sqm-controls-left,
+.sqm-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* ========================================
+   Live Pull Toggle - shadcn Style
+   ======================================== */
+
+.sqm-live-pull-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sqm-live-pull-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--sqm-muted);
+  border-radius: var(--sqm-radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.sqm-live-icon {
+  width: 1rem;
+  height: 1rem;
+  color: var(--sqm-info);
+}
+
+.sqm-toggle-text {
+  color: var(--sqm-muted-foreground);
+}
+
+.sqm-live-status {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-left: 0.5rem;
+}
+
+.sqm-status-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--sqm-muted-foreground);
+  transition: var(--sqm-transition);
+}
+
+.sqm-status-dot.active {
+  background: var(--sqm-success);
+  animation: sqm-pulse 2s infinite;
+}
+
+.sqm-status-text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--sqm-muted-foreground);
+}
+
+.sqm-toggle-switch {
+  position: relative;
+  width: 2.75rem;
+  height: 1.5rem;
+  background: var(--sqm-input);
+  border-radius: 0.75rem;
+  border: none;
+  cursor: pointer;
+  transition: var(--sqm-transition);
+  outline: none;
+}
+
+.sqm-toggle-switch:focus-visible {
+  outline: 2px solid var(--sqm-ring);
+  outline-offset: 2px;
+}
+
+.sqm-toggle-switch[data-enabled="true"] {
+  background: var(--sqm-primary);
+}
+
+.sqm-toggle-thumb {
+  position: absolute;
+  top: 0.125rem;
+  left: 0.125rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  background: var(--sqm-background);
+  border-radius: 50%;
+  transition: var(--sqm-transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--sqm-shadow-sm);
+}
+
+.sqm-toggle-switch[data-enabled="true"] .sqm-toggle-thumb {
+  transform: translateX(1.25rem);
+}
+
+.sqm-toggle-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  color: var(--sqm-muted-foreground);
+}
+
+.sqm-toggle-icon-off {
+  display: block;
+}
+
+.sqm-toggle-icon-on {
+  display: none;
+}
+
+.sqm-toggle-switch[data-enabled="true"] .sqm-toggle-icon-off {
+  display: none;
+}
+
+.sqm-toggle-switch[data-enabled="true"] .sqm-toggle-icon-on {
+  display: block;
+  color: var(--sqm-success);
+}
+
+/* ========================================
+   Refresh Button - Clean Design
+   ======================================== */
+
+.sqm-refresh-container {
+  position: relative;
+}
+
+.sqm-refresh-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--sqm-secondary);
+  border: 1px solid var(--sqm-border);
+  border-radius: var(--sqm-radius-sm);
+  color: var(--sqm-secondary-foreground);
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: var(--sqm-transition);
+  outline: none;
+}
+
+.sqm-refresh-button:hover {
+  background: var(--sqm-accent);
+}
+
+.sqm-refresh-button:focus-visible {
+  outline: 2px solid var(--sqm-ring);
+  outline-offset: 2px;
+}
+
+.sqm-refresh-icon {
+  width: 1rem;
+  height: 1rem;
+  transition: var(--sqm-transition);
+}
+
+.sqm-refresh-container[data-loading="true"] .sqm-refresh-icon {
+  animation: sqm-spin 1s linear infinite;
+}
+
+/* ========================================
+   Buttons - shadcn Style System
+   ======================================== */
+
+.sqm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: var(--sqm-radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: var(--sqm-transition);
+  text-decoration: none;
+  outline: none;
+  white-space: nowrap;
+}
+
+.sqm-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sqm-btn:focus-visible {
+  outline: 2px solid var(--sqm-ring);
+  outline-offset: 2px;
+}
+
+/* Primary Button */
+.sqm-btn-primary {
+  background: var(--sqm-primary);
+  color: var(--sqm-primary-foreground);
+  border-color: var(--sqm-primary);
+}
+
+.sqm-btn-primary:hover:not(:disabled) {
+  background: hsl(from var(--sqm-primary) h s calc(l - 5%));
+}
+
+/* Secondary Button */
+.sqm-btn-secondary {
+  background: var(--sqm-secondary);
+  color: var(--sqm-secondary-foreground);
+  border-color: var(--sqm-border);
+}
+
+.sqm-btn-secondary:hover:not(:disabled) {
+  background: var(--sqm-accent);
+}
+
+/* Success Button */
+.sqm-btn-success {
+  background: var(--sqm-success);
+  color: var(--sqm-success-foreground);
+  border-color: var(--sqm-success);
+}
+
+.sqm-btn-success:hover:not(:disabled) {
+  background: hsl(from var(--sqm-success) h s calc(l - 5%));
+}
+
+/* Warning Button */
+.sqm-btn-warning {
+  background: var(--sqm-warning);
+  color: var(--sqm-warning-foreground);
+  border-color: var(--sqm-warning);
+}
+
+.sqm-btn-warning:hover:not(:disabled) {
+  background: hsl(from var(--sqm-warning) h s calc(l - 5%));
+}
+
+/* Destructive Button */
+.sqm-btn-danger {
+  background: var(--sqm-destructive);
+  color: var(--sqm-destructive-foreground);
+  border-color: var(--sqm-destructive);
+}
+
+.sqm-btn-danger:hover:not(:disabled) {
+  background: hsl(from var(--sqm-destructive) h s calc(l - 5%));
+}
+
+/* Ghost Button */
+.sqm-btn-ghost {
+  background: transparent;
+  color: var(--sqm-foreground);
+  border-color: transparent;
+}
+
+.sqm-btn-ghost:hover:not(:disabled) {
+  background: var(--sqm-accent);
+}
+
+/* Button Sizes */
+.sqm-btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+.sqm-btn-lg {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+}
+
+/* ========================================
+   Queue Summary Cards
+   ======================================== */
+
+.sqm-queue-summary {
+  margin-bottom: 1.5rem;
+}
+
+/* ========================================
+   Table - Clean & Minimal
+   ======================================== */
+
+.sqm-table-container {
+  background: var(--sqm-card);
+  border: 1px solid var(--sqm-border);
+  border-radius: var(--sqm-radius);
+  overflow: hidden;
+  box-shadow: var(--sqm-shadow-sm);
+}
+
+.sqm-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: transparent;
+  font-size: 0.875rem;
+}
+
+.sqm-table thead {
+  background: var(--sqm-muted);
+}
+
+.sqm-table th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--sqm-muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--sqm-border);
+}
+
+.sqm-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--sqm-border);
+  vertical-align: middle;
+}
+
+.sqm-table tbody tr {
+  transition: var(--sqm-transition);
+}
+
+.sqm-table tbody tr:hover {
+  background: var(--sqm-muted);
+}
+
+.sqm-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Queue Row States */
+.sqm-queue-row.sqm-status-paused {
+  background: hsl(from var(--sqm-warning) h s l / 0.1);
+}
+
+.sqm-queue-row.sqm-status-blocked {
+  background: hsl(from var(--sqm-destructive) h s l / 0.1);
+}
+
+/* Queue Name Column */
+.sqm-col-name {
+  font-weight: 500;
+  min-width: 200px;
+}
+
+.sqm-queue-name {
+  font-family: var(--sqm-font-mono);
+  color: var(--sqm-foreground);
+  margin-left: 0.5rem;
+}
+
+/* Badges */
+.sqm-critical-badge,
+.sqm-blocked-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.125rem 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  border-radius: var(--sqm-radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sqm-critical-badge {
+  background: var(--sqm-destructive);
+  color: var(--sqm-destructive-foreground);
+}
+
+.sqm-blocked-badge {
+  background: var(--sqm-muted);
+  color: var(--sqm-muted-foreground);
+}
+
+.sqm-limits-info {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.125rem 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  background: hsl(from var(--sqm-info) h s l / 0.1);
+  color: var(--sqm-info);
+  border-radius: var(--sqm-radius-sm);
+  font-family: var(--sqm-font-mono);
+}
+
+/* Data Columns */
+.sqm-col-size,
+.sqm-col-workers,
+.sqm-col-latency {
+  font-family: var(--sqm-font-mono);
+  font-weight: 500;
+  text-align: right;
+  min-width: 80px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sqm-col-actions {
+  text-align: right;
+  min-width: 120px;
+}
+
+.sqm-worker-info {
+  text-align: right;
+  font-family: var(--sqm-font-mono);
+  font-size: 0.875rem;
+  line-height: 1.2;
+}
+
+.sqm-worker-busy {
+  font-weight: 500;
+  color: var(--sqm-foreground);
+}
+
+.sqm-process-limit {
+  color: var(--sqm-muted-foreground);
+  margin-top: 0.125rem;
+  font-size: 0.75rem;
+}
+
+.sqm-status-indicator {
+  display: inline-block;
+  font-size: 0.75rem;
+  margin-left: 0.25rem;
+  opacity: 0.8;
+}
+
+/* ========================================
+   Loading & Error States
+   ======================================== */
+
+.sqm-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.sqm-loading-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid var(--sqm-border);
+  border-top: 2px solid var(--sqm-primary);
+  border-radius: 50%;
+  animation: sqm-spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.sqm-loading-text {
+  color: var(--sqm-muted-foreground);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.sqm-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+  background: hsl(from var(--sqm-destructive) h s l / 0.1);
+  border: 1px solid hsl(from var(--sqm-destructive) h s l / 0.2);
+  border-radius: var(--sqm-radius);
+  margin: 1rem 0;
+}
+
+.sqm-error-icon {
+  width: 3rem;
+  height: 3rem;
+  color: var(--sqm-destructive);
+  margin-bottom: 1rem;
+}
+
+.sqm-error-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--sqm-destructive);
+  margin-bottom: 0.5rem;
+}
+
+.sqm-error-message {
+  color: var(--sqm-muted-foreground);
+  margin-bottom: 1.5rem;
+}
+
+/* ========================================
+   Notifications - Toast Style
+   ======================================== */
+
+.sqm-notification {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--sqm-card);
+  border: 1px solid var(--sqm-border);
+  border-radius: var(--sqm-radius);
+  box-shadow: var(--sqm-shadow-lg);
+  font-weight: 600;
+  color: var(--sqm-card-foreground);
+  z-index: var(--sqm-z-notification);
+  animation: sqm-slide-in 0.2s ease-out;
+  max-width: 400px;
+  font-size: 0.875rem;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.sqm-notification-success {
+  border-color: var(--sqm-success);
+  background: hsl(from var(--sqm-success) h s l / 0.2);
+  color: var(--sqm-success);
+}
+
+.sqm-notification-error {
+  border-color: var(--sqm-destructive);
+  background: hsl(from var(--sqm-destructive) h s l / 0.2);
+  color: var(--sqm-destructive);
+}
+
+.sqm-notification-warning {
+  border-color: var(--sqm-warning);
+  background: hsl(from var(--sqm-warning) h s l / 0.2);
+  color: var(--sqm-warning);
+}
+
+.sqm-notification-info {
+  border-color: var(--sqm-info);
+  background: hsl(from var(--sqm-info) h s l / 0.2);
+  color: var(--sqm-info);
+}
+
+/* ========================================
+   Utility Classes
+   ======================================== */
+
+.sqm-hidden {
+  display: none !important;
+}
+
+.sqm-invisible {
+  visibility: hidden;
+}
+
+.sqm-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sqm-text-center {
+  text-align: center;
+}
+
+.sqm-text-right {
+  text-align: right;
+}
+
+.sqm-font-mono {
+  font-family: var(--sqm-font-mono);
+}
+
+.sqm-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ========================================
+   Animations
+   ======================================== */
+
+@keyframes sqm-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes sqm-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes sqm-slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes sqm-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ========================================
+   Responsive Design
+   ======================================== */
+
+@media (max-width: 768px) {
+  .sqm-container {
+    padding: 1rem;
+  }
+
+  .sqm-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .sqm-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .sqm-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .sqm-controls-left,
+  .sqm-controls-right {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .sqm-table-container {
+    overflow-x: auto;
+  }
+
+  .sqm-table {
+    min-width: 600px;
+  }
+
+  .sqm-notification {
+    top: 1rem;
+    right: 1rem;
+    left: 1rem;
+    max-width: none;
+  }
+
+  .sqm-theme-toggle {
+    top: 0.75rem;
+    right: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .sqm-container {
+    padding: 0.75rem;
+  }
+
+  .sqm-stat-value {
+    font-size: 1.5rem;
+  }
+
+  .sqm-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+
+  .sqm-table th,
+  .sqm-table td {
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+/* ========================================
+   Focus Management & Accessibility
+   ======================================== */
+
+.sqm-focus-trap {
+  outline: none;
+}
+
+/* Enhanced focus indicators for better accessibility */
+*:focus-visible {
+  outline: 2px solid var(--sqm-ring);
+  outline-offset: 2px;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

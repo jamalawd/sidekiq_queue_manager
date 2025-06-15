@@ -1,0 +1,838 @@
+/*
+ * Sidekiq Queue Manager - shadcn-Inspired Modal System
+ * Completely redesigned modal components with clean, minimal aesthetics
+ */
+
+/* ========================================
+   Modal System - shadcn Inspired
+   ======================================== */
+
+.sqm-custom-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: var(--sqm-z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  pointer-events: auto;
+}
+
+.sqm-custom-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: hsl(0 0% 0% / 0.8);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: sqm-modal-fade-in 0.15s ease-out;
+  z-index: calc(var(--sqm-z-modal) - 1);
+}
+
+.sqm-custom-modal-content {
+  position: relative;
+  background: var(--sqm-card);
+  border: 1px solid var(--sqm-border);
+  border-radius: var(--sqm-radius-lg);
+  box-shadow: var(--sqm-shadow-lg);
+  max-width: 32rem;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  animation: sqm-modal-scale-in 0.15s ease-out;
+  z-index: var(--sqm-z-modal);
+  transform-origin: center center;
+}
+
+/* Enhanced Jobs Modal - Larger and Better */
+.sqm-custom-modal-content.sqm-jobs-modal {
+  max-width: 56rem;
+  max-height: 85vh;
+}
+
+.sqm-custom-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 1.5rem 0;
+  border-bottom: none;
+}
+
+.sqm-custom-modal-header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--sqm-foreground);
+}
+
+.sqm-custom-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  color: var(--sqm-muted-foreground);
+  border-radius: var(--sqm-radius-sm);
+  transition: var(--sqm-transition);
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+}
+
+.sqm-custom-modal-close:hover {
+  background: var(--sqm-accent);
+  color: var(--sqm-accent-foreground);
+}
+
+.sqm-custom-modal-close:focus-visible {
+  outline: 2px solid var(--sqm-ring);
+  outline-offset: 2px;
+}
+
+.sqm-custom-modal-body {
+  padding: 1.5rem;
+  color: var(--sqm-foreground);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.sqm-jobs-modal .sqm-custom-modal-body {
+  max-height: 70vh;
+  padding: 1rem 1.5rem;
+}
+
+.sqm-custom-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 0 1.5rem 1.5rem;
+  border-top: none;
+}
+
+/* ========================================
+   Prompt Dialog Components
+   ======================================== */
+
+.sqm-prompt-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sqm-prompt-message {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--sqm-foreground);
+  line-height: 1.5;
+}
+
+.sqm-prompt-help {
+  font-size: 0.75rem;
+  color: var(--sqm-muted-foreground);
+  line-height: 1.4;
+}
+
+.sqm-prompt-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--sqm-border);
+  border-radius: var(--sqm-radius-sm);
+  font-size: 0.875rem;
+  background: var(--sqm-background);
+  color: var(--sqm-foreground);
+  transition: var(--sqm-transition);
+  font-family: var(--sqm-font-mono);
+  outline: none;
+}
+
+.sqm-prompt-input:focus {
+  border-color: var(--sqm-ring);
+  box-shadow: 0 0 0 2px hsl(from var(--sqm-ring) h s l / 0.2);
+}
+
+.sqm-prompt-input::placeholder {
+  color: var(--sqm-muted-foreground);
+}
+
+/* ========================================
+   Confirm Dialog Components
+   ======================================== */
+
+.sqm-confirm-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.sqm-confirm-icon {
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  margin-top: 0.125rem;
+}
+
+.sqm-confirm-icon.warning {
+  background: hsl(from var(--sqm-warning) h s l / 0.1);
+  color: var(--sqm-warning);
+}
+
+.sqm-confirm-icon.danger {
+  background: hsl(from var(--sqm-destructive) h s l / 0.1);
+  color: var(--sqm-destructive);
+}
+
+.sqm-confirm-icon.info {
+  background: hsl(from var(--sqm-info) h s l / 0.1);
+  color: var(--sqm-info);
+}
+
+.sqm-confirm-text {
+  flex: 1;
+}
+
+.sqm-confirm-message {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--sqm-foreground);
+  line-height: 1.5;
+  margin-bottom: 0.5rem;
+}
+
+.sqm-confirm-details {
+  font-size: 0.75rem;
+  color: var(--sqm-muted-foreground);
+  line-height: 1.4;
+}
+
+/* ========================================
+   Modal Button System - Consistent with Main Design
+   ======================================== */
+
+.sqm-btn-modal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: var(--sqm-radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: var(--sqm-transition);
+  text-decoration: none;
+  outline: none;
+  white-space: nowrap;
+  min-width: 5rem;
+}
+
+.sqm-btn-modal:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sqm-btn-modal:focus-visible {
+  outline: 2px solid var(--sqm-ring);
+  outline-offset: 2px;
+}
+
+.sqm-btn-modal-primary {
+  background: var(--sqm-primary);
+  color: var(--sqm-primary-foreground);
+  border-color: var(--sqm-primary);
+}
+
+.sqm-btn-modal-primary:hover:not(:disabled) {
+  background: hsl(from var(--sqm-primary) h s calc(l - 5%));
+}
+
+.sqm-btn-modal-danger {
+  background: var(--sqm-destructive);
+  color: var(--sqm-destructive-foreground);
+  border-color: var(--sqm-destructive);
+}
+
+.sqm-btn-modal-danger:hover:not(:disabled) {
+  background: hsl(from var(--sqm-destructive) h s calc(l - 5%));
+}
+
+.sqm-btn-modal-warning {
+  background: var(--sqm-warning);
+  color: var(--sqm-warning-foreground);
+  border-color: var(--sqm-warning);
+}
+
+.sqm-btn-modal-warning:hover:not(:disabled) {
+  background: hsl(from var(--sqm-warning) h s calc(l - 5%));
+}
+
+.sqm-btn-modal-secondary {
+  background: var(--sqm-secondary);
+  color: var(--sqm-secondary-foreground);
+  border-color: var(--sqm-border);
+}
+
+.sqm-btn-modal-secondary:hover:not(:disabled) {
+  background: var(--sqm-accent);
+}
+
+/* ========================================
+   Enhanced Job List Components - Better Details
+   ======================================== */
+
+.sqm-job-list {
+  max-height: 500px;
+  overflow-y: auto;
+  border: 1px solid var(--sqm-border);
+  border-radius: var(--sqm-radius-sm);
+  background: var(--sqm-background);
+}
+
+.sqm-job-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid var(--sqm-border);
+  transition: var(--sqm-transition);
+  gap: 1rem;
+}
+
+.sqm-job-item:last-child {
+  border-bottom: none;
+}
+
+.sqm-job-item:hover {
+  background: var(--sqm-muted);
+}
+
+.sqm-job-info {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.sqm-job-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.sqm-job-class {
+  font-family: var(--sqm-font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--sqm-primary);
+}
+
+.sqm-job-priority {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.125rem 0.375rem;
+  border-radius: var(--sqm-radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sqm-job-priority.high {
+  background: hsl(from var(--sqm-destructive) h s l / 0.1);
+  color: var(--sqm-destructive);
+}
+
+.sqm-job-priority.normal {
+  background: hsl(from var(--sqm-info) h s l / 0.1);
+  color: var(--sqm-info);
+}
+
+.sqm-job-priority.low {
+  background: var(--sqm-muted);
+  color: var(--sqm-muted-foreground);
+}
+
+.sqm-job-args-container {
+  margin-bottom: 0.75rem;
+}
+
+.sqm-job-args-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--sqm-muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+.sqm-job-args {
+  font-family: var(--sqm-font-mono);
+  font-size: 0.75rem;
+  color: var(--sqm-foreground);
+  background: var(--sqm-muted);
+  padding: 0.5rem;
+  border-radius: var(--sqm-radius-sm);
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 8rem;
+  overflow-y: auto;
+  border: 1px solid var(--sqm-border);
+}
+
+.sqm-job-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  font-size: 0.6875rem;
+  color: var(--sqm-muted-foreground);
+  font-family: var(--sqm-font-mono);
+  overflow: hidden;
+}
+
+.sqm-job-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.sqm-job-meta-label {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--sqm-muted-foreground);
+}
+
+.sqm-job-meta-value {
+  color: var(--sqm-foreground);
+  font-weight: 500;
+  word-break: break-all;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  min-width: 0;
+}
+
+.sqm-job-meta-value.job-id {
+  font-size: 0.625rem;
+  background: var(--sqm-muted);
+  padding: 0.125rem 0.25rem;
+  border-radius: var(--sqm-radius-sm);
+  border: 1px solid var(--sqm-border);
+  font-family: var(--sqm-font-mono);
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+.sqm-job-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-left: 1rem;
+  flex-shrink: 0;
+}
+
+.sqm-job-delete {
+  padding: 0.5rem;
+  background: transparent;
+  color: var(--sqm-muted-foreground);
+  border: 1px solid var(--sqm-border);
+  border-radius: var(--sqm-radius-sm);
+  cursor: pointer;
+  transition: var(--sqm-transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+  font-size: 0.875rem;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+}
+
+.sqm-job-delete:hover:not(:disabled) {
+  background: hsl(from var(--sqm-destructive) h s l / 0.1);
+  color: var(--sqm-destructive);
+  border-color: var(--sqm-destructive);
+}
+
+.sqm-job-delete:focus-visible {
+  outline: 2px solid var(--sqm-ring);
+  outline-offset: 2px;
+}
+
+.sqm-job-delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sqm-job-delete.success {
+  background: hsl(from var(--sqm-success) h s l / 0.1);
+  color: var(--sqm-success);
+  border-color: var(--sqm-success);
+}
+
+.sqm-job-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: var(--sqm-radius-sm);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sqm-job-status.enqueued {
+  background: hsl(from var(--sqm-info) h s l / 0.1);
+  color: var(--sqm-info);
+}
+
+.sqm-job-status.retry {
+  background: hsl(from var(--sqm-warning) h s l / 0.1);
+  color: var(--sqm-warning);
+}
+
+.sqm-job-status.failed {
+  background: hsl(from var(--sqm-destructive) h s l / 0.1);
+  color: var(--sqm-destructive);
+}
+
+/* ========================================
+   Enhanced Pagination Components
+   ======================================== */
+
+.sqm-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--sqm-border);
+}
+
+.sqm-pagination-info {
+  font-size: 0.75rem;
+  color: var(--sqm-muted-foreground);
+  font-family: var(--sqm-font-mono);
+}
+
+.sqm-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sqm-pagination-btn {
+  padding: 0.375rem 0.75rem;
+  background: var(--sqm-secondary);
+  border: 1px solid var(--sqm-border);
+  color: var(--sqm-secondary-foreground);
+  border-radius: var(--sqm-radius-sm);
+  cursor: pointer;
+  transition: var(--sqm-transition);
+  font-size: 0.75rem;
+  font-weight: 500;
+  outline: none;
+}
+
+.sqm-pagination-btn:hover:not(:disabled) {
+  background: var(--sqm-accent);
+}
+
+.sqm-pagination-btn:focus-visible {
+  outline: 2px solid var(--sqm-ring);
+  outline-offset: 2px;
+}
+
+.sqm-pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sqm-pagination-current {
+  padding: 0.375rem 0.75rem;
+  background: var(--sqm-primary);
+  color: var(--sqm-primary-foreground);
+  border-radius: var(--sqm-radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: var(--sqm-font-mono);
+  min-width: 2rem;
+  text-align: center;
+}
+
+/* ========================================
+   Actions Menu - Dropdown Style
+   ======================================== */
+
+.sqm-actions-menu {
+  position: absolute;
+  background: var(--sqm-popover);
+  border: 1px solid var(--sqm-border);
+  border-radius: var(--sqm-radius);
+  box-shadow: var(--sqm-shadow-lg);
+  z-index: var(--sqm-z-dropdown);
+  min-width: 12rem;
+  animation: sqm-dropdown-in 0.1s ease-out;
+}
+
+.sqm-actions-menu-content {
+  padding: 0.25rem;
+}
+
+.sqm-actions-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--sqm-border);
+  background: var(--sqm-muted);
+  margin: -0.25rem -0.25rem 0.25rem;
+  border-radius: var(--sqm-radius) var(--sqm-radius) 0 0;
+}
+
+.sqm-actions-queue-name {
+  font-weight: 600;
+  color: var(--sqm-foreground);
+  font-family: var(--sqm-font-mono);
+  font-size: 0.75rem;
+}
+
+.sqm-actions-menu-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--sqm-muted-foreground);
+  font-size: 1rem;
+  padding: 0.25rem;
+  border-radius: var(--sqm-radius-sm);
+  transition: var(--sqm-transition);
+  outline: none;
+}
+
+.sqm-actions-menu-close:hover {
+  background: var(--sqm-accent);
+  color: var(--sqm-accent-foreground);
+}
+
+.sqm-actions-menu-close:focus-visible {
+  outline: 2px solid var(--sqm-ring);
+  outline-offset: 2px;
+}
+
+.sqm-actions-menu-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.sqm-actions-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: none;
+  border: none;
+  border-radius: var(--sqm-radius-sm);
+  cursor: pointer;
+  transition: var(--sqm-transition);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--sqm-foreground);
+  text-align: left;
+  width: 100%;
+  outline: none;
+}
+
+.sqm-actions-menu-item:hover {
+  background: var(--sqm-accent);
+}
+
+.sqm-actions-menu-item:focus-visible {
+  outline: 2px solid var(--sqm-ring);
+  outline-offset: 2px;
+}
+
+.sqm-actions-danger:hover {
+  background: hsl(from var(--sqm-destructive) h s l / 0.1);
+  color: var(--sqm-destructive);
+}
+
+/* ========================================
+   Modal Animations - Fixed Center Scaling
+   ======================================== */
+
+@keyframes sqm-modal-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sqm-modal-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes sqm-dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.25rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Modal fade-out for closing animation */
+.sqm-modal-fade-out {
+  opacity: 0 !important;
+  transition: opacity 0.15s ease-out !important;
+}
+
+.sqm-modal-fade-out .sqm-custom-modal-content {
+  transform: scale(0.95) !important;
+  transition: transform 0.15s ease-out !important;
+}
+
+/* ========================================
+   Responsive Modal Design
+   ======================================== */
+
+@media (max-width: 768px) {
+  .sqm-custom-modal-content.sqm-jobs-modal {
+    max-width: 95vw;
+    margin: 0 auto;
+  }
+
+  .sqm-job-item {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .sqm-job-actions {
+    flex-direction: row;
+    margin-left: 0;
+    align-self: flex-end;
+  }
+
+  .sqm-job-meta {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+
+  .sqm-job-meta-value.job-id {
+    font-size: 0.5625rem;
+    padding: 0.1875rem 0.375rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .sqm-custom-modal {
+    padding: 1rem;
+  }
+
+  .sqm-custom-modal-content {
+    max-width: 100%;
+    max-height: 95vh;
+    margin: 0;
+  }
+
+  .sqm-custom-modal-content.sqm-jobs-modal {
+    max-width: 100%;
+  }
+
+  .sqm-custom-modal-header {
+    padding: 1rem 1rem 0.5rem;
+  }
+
+  .sqm-custom-modal-header h3 {
+    font-size: 1rem;
+  }
+
+  .sqm-custom-modal-body {
+    padding: 1rem;
+  }
+
+  .sqm-jobs-modal .sqm-custom-modal-body {
+    padding: 0.75rem 1rem;
+  }
+
+  .sqm-custom-modal-footer {
+    padding: 0.5rem 1rem 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .sqm-btn-modal {
+    min-width: 4rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+
+  .sqm-confirm-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .sqm-confirm-icon {
+    margin: 0 auto;
+  }
+
+  .sqm-job-meta {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .sqm-job-meta-value.job-id {
+    font-size: 0.5625rem;
+    padding: 0.25rem 0.5rem;
+    max-width: 100%;
+  }
+
+  .sqm-job-args {
+    max-height: 6rem;
+  }
+
+  .sqm-actions-menu {
+    min-width: 10rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .sqm-custom-modal {
+    padding: 0.5rem;
+  }
+
+  .sqm-custom-modal-content {
+    border-radius: var(--sqm-radius);
+  }
+
+  .sqm-job-args {
+    max-height: 4rem;
+    font-size: 0.6875rem;
+  }
+}

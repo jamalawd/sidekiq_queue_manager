@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en" class="sidekiq-queue-manager">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <title>Sidekiq Queue Manager</title>
+    <meta name="description" content="Professional Sidekiq queue monitoring and management interface">
+
+    <!-- Security Headers -->
+    <meta name="robots" content="noindex, nofollow">
+
+    <!-- Color Scheme Support -->
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#6366f1" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#4f46e5" media="(prefers-color-scheme: dark)">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='%236366f1'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' d='M3.75 6.75h16.5M3.75 12h16.5M12 17.25h8.25M3.75 17.25h.01v.01h-.01v-.01ZM7.5 17.25h.01v.01H7.5v-.01ZM11.25 17.25h.01v.01h-.01v-.01Z' /%3e%3c/svg%3e">
+
+    <!-- Asset Loading (Compatible with asset pipeline and direct serving) -->
+    <% asset_info = asset_serving_info %>
+
+    <!-- Preload Critical Resources -->
+    <link rel="preload" href="<%= asset_info[:css_path] %>" as="style">
+    <link rel="preload" href="<%= asset_info[:modals_css_path] %>" as="style">
+    <link rel="preload" href="<%= asset_info[:js_path] %>" as="script">
+
+    <!-- Stylesheets -->
+    <% if asset_info[:use_asset_pipeline] %>
+      <%= stylesheet_link_tag 'sidekiq_queue_manager/application', 'data-turbo-track': 'reload' %>
+      <%= stylesheet_link_tag 'sidekiq_queue_manager/modals', 'data-turbo-track': 'reload' %>
+    <% else %>
+      <link rel="stylesheet" href="<%= asset_info[:css_path] %>" data-turbo-track="reload">
+      <link rel="stylesheet" href="<%= asset_info[:modals_css_path] %>" data-turbo-track="reload">
+    <% end %>
+
+    <!-- Theme Initialization Script (Prevent FOUC) -->
+    <script>
+      (function() {
+        const storedTheme = localStorage.getItem('sqm-theme');
+        const systemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        if (storedTheme === 'dark' || (!storedTheme && systemDark)) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        } else if (storedTheme === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+        // For 'auto' or no preference, let CSS handle it
+      })();
+    </script>
+
+    <!-- Configuration for JavaScript -->
+    <script type="text/javascript">
+      window.SidekiqQueueManagerConfig = {
+        mountPath: '<%= sidekiq_dashboard.root_path %>',
+        refreshInterval: <%= SidekiqQueueManager.configuration.refresh_interval %>,
+        theme: '<%= SidekiqQueueManager.configuration.theme %>',
+        criticalQueues: <%= SidekiqQueueManager.configuration.critical_queues.to_json.html_safe %>,
+        enableLogging: <%= SidekiqQueueManager.configuration.enable_logging %>
+      };
+    </script>
+  </head>
+
+  <body class="sidekiq-queue-manager">
+    <!-- Skip Link for Accessibility -->
+    <a href="#main-content" class="skip-link sqm-btn sqm-btn-primary"
+       style="position: absolute; top: -3rem; left: 50%; transform: translateX(-50%); z-index: 10001; transition: top 0.2s ease-out;">
+      Skip to main content
+    </a>
+
+    <!-- Main Application Container -->
+    <div class="sqm-container">
+      <!-- Header -->
+      <header class="sqm-header" role="banner">
+        <div>
+          <h1 class="sqm-title">
+            📊 Sidekiq Queue Manager
+          </h1>
+          <p class="sqm-subtitle">
+            Professional queue monitoring and management interface
+          </p>
+        </div>
+
+        <div class="sqm-header-info">
+          <div style="font-size: 0.6875rem; opacity: 0.8;">Version <%= SidekiqQueueManager::VERSION %></div>
+          <div id="sqm-last-updated" style="margin-top: 0.25rem;">
+            Last updated: <span id="sqm-timestamp">Loading...</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content Area -->
+      <main id="main-content" role="main">
+        <%= yield %>
+      </main>
+
+      <!-- Footer -->
+      <footer class="sqm-footer"
+              style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--sqm-border); text-align: center; color: var(--sqm-muted-foreground); font-size: 0.75rem;">
+        <p>
+          Powered by
+          <a href="https://github.com/jamalawd/sidekiq_queue_manager"
+             target="_blank"
+             rel="noopener noreferrer"
+             style="color: var(--sqm-primary); text-decoration: none; font-weight: 500;">
+            Sidekiq Queue Manager
+          </a>
+          v<%= SidekiqQueueManager::VERSION %>
+        </p>
+        <p style="margin-top: 0.5rem; font-size: 0.6875rem; opacity: 0.8;">
+          Ruby <%= RUBY_VERSION %> • Rails <%= Rails.version %> • Sidekiq <%= Sidekiq::VERSION %>
+        </p>
+      </footer>
+    </div>
+
+    <!-- JavaScript -->
+    <% if asset_info[:use_asset_pipeline] %>
+      <%= javascript_include_tag 'sidekiq_queue_manager/application', 'data-turbo-track': 'reload' %>
+    <% else %>
+      <script src="<%= asset_info[:js_path] %>" data-turbo-track="reload"></script>
+    <% end %>
+
+    <!-- Skip Link Focus Styles -->
+    <style>
+      .skip-link:focus {
+        top: 1rem;
+      }
+    </style>
+  </body>
+</html>
