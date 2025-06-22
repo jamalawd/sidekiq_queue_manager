@@ -1,0 +1,294 @@
+# =====================================================================
+# RuboCop Configuration for Sidekiq Queue Manager
+# Professional Ruby/Rails coding standards for gem development
+# =====================================================================
+
+require:
+  - rubocop-performance
+  - rubocop-rails
+
+AllCops:
+  TargetRubyVersion: 3.0
+  NewCops: enable
+  SuggestExtensions: false
+  Exclude:
+    - 'bin/**/*'
+    - 'pkg/**/*'
+    - 'vendor/**/*'
+    - 'tmp/**/*'
+    - 'coverage/**/*'
+    - 'doc/**/*'
+    - 'node_modules/**/*'
+    - 'sidekiq_queue_manager-*.gem'
+    - '.ruby-lsp/**/*'
+    - 'spec/fixtures/**/*'
+
+# =====================================================================
+# Layout Rules - Code Formatting and Structure
+# =====================================================================
+
+Layout/LineLength:
+  Max: 140
+  AllowedPatterns:
+    - '\A\s*#'        # Allow long comments
+    - 'https?://'     # Allow long URLs
+    - '\A\s*raise\s'  # Allow long error messages
+  Exclude:
+    - 'config/routes.rb'  # Routes can have long lines
+
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: aligned
+
+Layout/FirstArrayElementIndentation:
+  EnforcedStyle: consistent
+
+Layout/FirstHashElementIndentation:
+  EnforcedStyle: consistent
+
+Layout/TrailingEmptyLines:
+  EnforcedStyle: final_blank_line
+
+Layout/EmptyLinesAroundBlockBody:
+  Enabled: true
+
+Layout/EmptyLinesAroundClassBody:
+  Enabled: true
+
+Layout/EmptyLinesAroundModuleBody:
+  Enabled: true
+
+Layout/SpaceInsideHashLiteralBraces:
+  EnforcedStyle: space
+
+# =====================================================================
+# Style Rules - Code Style and Conventions
+# =====================================================================
+
+Style/Documentation:
+  Enabled: false  # We use inline comments and README
+
+Style/StringLiterals:
+  EnforcedStyle: single_quotes
+  ConsistentQuotesInMultiline: true
+
+Style/StringLiteralsInInterpolation:
+  EnforcedStyle: single_quotes
+
+Style/HashSyntax:
+  EnforcedStyle: ruby19
+
+Style/TrailingCommaInArguments:
+  EnforcedStyleForMultiline: no_comma
+
+Style/TrailingCommaInArrayLiteral:
+  EnforcedStyleForMultiline: no_comma
+
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: no_comma
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+  EnforcedStyle: always
+  SafeAutoCorrect: true
+
+Style/ClassAndModuleChildren:
+  Enabled: false  # Allow compact module syntax for engines
+
+Style/GuardClause:
+  Enabled: true
+  MinBodyLength: 2
+
+Style/Lambda:
+  EnforcedStyle: literal
+
+Style/IfUnlessModifier:
+  Enabled: true
+
+Style/MultilineIfModifier:
+  Enabled: true
+
+Style/NumericPredicate:
+  Enabled: true
+  EnforcedStyle: predicate
+
+Style/PredicateName:
+  Enabled: true
+  AllowedMethods:
+    - is_a?
+
+# =====================================================================
+# Metrics Rules - Code Complexity and Size
+# =====================================================================
+
+Metrics/BlockLength:
+  Max: 50
+  CountComments: false
+  Exclude:
+    - 'spec/**/*'
+    - '*.gemspec'
+    - 'Rakefile'
+    - 'config/routes.rb'
+    - 'config/application.rb'
+
+Metrics/ClassLength:
+  Max: 250  # Increased for Rails controllers and services
+  CountComments: false
+  Exclude:
+    - 'spec/**/*'
+    - 'app/controllers/**/*'  # Controllers can be longer due to many endpoints
+    - 'app/services/**/*'     # Service classes handle complex business logic
+
+Metrics/ModuleLength:
+  Max: 200
+  CountComments: false
+
+Metrics/MethodLength:
+  Max: 35  # Slightly increased for Rails methods
+  CountComments: false
+  Exclude:
+    - 'spec/**/*'
+
+Metrics/AbcSize:
+  Max: 25  # Slightly increased for Rails applications
+  Exclude:
+    - 'spec/**/*'
+    - 'app/controllers/**/*'  # Controllers often have higher ABC size
+    - 'app/services/**/*'     # Service methods can be complex
+
+Metrics/CyclomaticComplexity:
+  Max: 10
+  Exclude:
+    - 'spec/**/*'
+    - 'app/services/**/*'     # Business logic can be complex
+
+Metrics/PerceivedComplexity:
+  Max: 10
+  Exclude:
+    - 'spec/**/*'
+    - 'app/services/**/*'     # Business logic can be complex
+
+# =====================================================================
+# Naming Rules - Method and Variable Naming
+# =====================================================================
+
+Naming/PredicateName:
+  AllowedMethods:
+    - is_a?
+    - has_many
+    - has_one
+    - belongs_to
+
+Naming/AccessorMethodName:
+  Enabled: false  # Allow get_ prefixes for clarity in service methods
+
+Naming/VariableNumber:
+  CheckMethodNames: false
+
+# =====================================================================
+# Rails-specific Rules
+# =====================================================================
+
+Rails/Output:
+  Exclude:
+    - 'lib/tasks/**/*'
+    - 'Rakefile'
+
+Rails/FilePath:
+  EnforcedStyle: arguments
+
+Rails/HttpStatus:
+  EnforcedStyle: symbolic
+
+Rails/SkipsModelValidations:
+  AllowedMethods:
+    - touch
+    - update_attribute
+    - update_column
+    - update_columns
+    - update_counters
+    - increment!
+    - decrement!
+
+Rails/ApplicationController:
+  Enabled: false  # Engine controllers inherit from ApplicationController
+
+Rails/ApplicationJob:
+  Enabled: false
+
+Rails/ApplicationRecord:
+  Enabled: false
+
+# =====================================================================
+# Performance Rules
+# =====================================================================
+
+Performance/RedundantStringChars:
+  Enabled: true
+
+Performance/StringInclude:
+  Enabled: true
+
+Performance/IoReadlines:
+  Enabled: true
+
+Performance/MapCompact:
+  Enabled: true
+
+Performance/SelectMap:
+  Enabled: true
+
+# =====================================================================
+# Gemspec Rules
+# =====================================================================
+
+Gemspec/DevelopmentDependencies:
+  Enabled: false  # Allow development dependencies in gemspec for gems
+
+# =====================================================================
+# Lint Rules - Code Quality and Error Prevention
+# =====================================================================
+
+Lint/MissingSuper:
+  Enabled: false  # Not always required in Rails engines
+
+Lint/SuppressedException:
+  AllowComments: true
+
+Lint/UnusedMethodArgument:
+  AllowUnusedKeywordArguments: true
+
+# =====================================================================
+# Security Rules
+# =====================================================================
+
+Security/Open:
+  Enabled: true
+
+Security/Eval:
+  Enabled: true
+
+Security/YAMLLoad:
+  Enabled: true
+
+# =====================================================================
+# Disabled Rules - Rules that conflict with Rails conventions
+# =====================================================================
+
+Style/AsciiComments:
+  Enabled: false  # Allow unicode in comments
+
+Style/NumericLiterals:
+  Enabled: false  # Don't enforce underscores in numbers
+
+# =====================================================================
+# Custom Rules for This Project
+# =====================================================================
+
+# Allow longer lines in specific cases for this project
+Layout/LineLength:
+  Exclude:
+    - 'lib/sidekiq_queue_manager/logging_middleware.rb'  # Logging statements can be long
+
+# Allow predicate methods without ? for validation methods
+Naming/PredicateMethod:
+  Enabled: false  # validate! and validate_dependencies! are Rails conventions

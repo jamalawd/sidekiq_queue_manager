@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # ========================================
+  # Basic Build Test - Multiple Ruby versions
+  # ========================================
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby-version: ['3.0', '3.1', '3.2', '3.3']
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Ruby ${{ matrix.ruby-version }}
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby-version }}
+        bundler-cache: true
+
+    - name: Install dependencies
+      run: bundle install
+
+    - name: Verify assets exist
+      run: bundle exec rake assets
+
+    - name: Build gem
+      run: gem build sidekiq_queue_manager.gemspec
+
+    - name: Test gem installation
+      run: gem install sidekiq_queue_manager-*.gem
