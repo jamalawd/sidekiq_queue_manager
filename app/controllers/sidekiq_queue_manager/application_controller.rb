@@ -179,12 +179,21 @@ module SidekiqQueueManager
 
     # Get the mount path from the engine's routes
     def engine_mount_path
-      # Extract mount path from the current request path
-      if request.path =~ %r{^(/[^/]+)}
-        Regexp.last_match(1)
-      else
-        '/sidekiq_manager' # Default fallback
+      # Look through Rails routes for engine mounts
+      Rails.application.routes.routes.each do |route|
+        next unless route.respond_to?(:app)
+        next unless route.app.respond_to?(:app)
+
+        # Check if this route's app is our engine
+        if route.app.app == SidekiqQueueManager::Engine
+          path_spec = route.path.spec.to_s
+          return path_spec.gsub(/\(\.:format\)$/, '').chomp('/')
+        end
       end
+
+      nil
+    rescue StandardError
+      nil
     end
 
     # Common helper for accessing main application methods
