@@ -22,7 +22,8 @@ Create `config/initializers/sidekiq_queue_manager.rb`:
 
 ```ruby
 SidekiqQueueManager.configure do |config|
-  # REQUIRED: Set basic auth password (follows Sidekiq Web UI pattern)
+  # Enable authentication (recommended for production)
+  config.basic_auth_enabled = true
   config.basic_auth_password = 'your-secure-password-here'
   
   # Optional: Protect critical queues
@@ -30,7 +31,7 @@ SidekiqQueueManager.configure do |config|
 end
 ```
 
-**⚠️ Professional Standard**: Like Sidekiq Web UI, this gem requires explicit authentication configuration. You must set a password or configure custom authentication.
+**🔒 Security Note**: Authentication is **disabled by default** for easy development setup. **Enable it for production** by setting `basic_auth_enabled = true` and providing a secure password.
 
 ### **2. Mount the Engine**
 

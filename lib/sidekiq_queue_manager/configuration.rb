@@ -14,16 +14,19 @@ module SidekiqQueueManager
     # Internal options (sensible defaults, not typically user-configured)
     attr_reader :redis_key_prefix, :redis_timeout, :log_level, :enable_csp, :cache_ttl
 
+    # Track whether user has explicitly configured the gem
+    attr_reader :explicitly_configured
+
     def initialize
       # Essential defaults (what most users care about)
       @authentication_method = nil          # Custom auth method (optional)
       @critical_queues = []                 # No protected queues by default
       @theme = 'auto'                       # Auto light/dark theme
 
-      # Basic HTTP Authentication (professional standard - explicit configuration required)
-      @basic_auth_enabled = true            # Secure by default like Sidekiq Web UI
+      # Basic HTTP Authentication - safer defaults for gem installation
+      @basic_auth_enabled = false           # Disabled by default - user must opt-in
       @basic_auth_username = 'admin'        # Standard admin username
-      @basic_auth_password = nil            # MUST be explicitly set by user
+      @basic_auth_password = nil            # MUST be explicitly set by user when enabled
 
       # Advanced defaults (rarely changed)
       @refresh_interval = 5000              # 5 second UI refresh
@@ -37,18 +40,33 @@ module SidekiqQueueManager
       @log_level = :info                    # Standard logging level
       @enable_csp = true                    # Security headers enabled
       @cache_ttl = 300                      # 5 minute cache TTL
+
+      # Track explicit configuration
+      @explicitly_configured = false
+    end
+
+    # Mark that user has explicitly configured the gem
+    def mark_as_configured!
+      @explicitly_configured = true
     end
 
     # Validate essential user-provided configuration
-    def validate!
+    def validate!(skip_auth_unless_configured: false)
       validate_basic_settings!
-      validate_authentication!
+
+      # Only validate authentication if explicitly configured or forced
+      if skip_auth_unless_configured && !@explicitly_configured
+        Rails.logger.debug '[SidekiqQueueManager] Skipping authentication validation - not explicitly configured'
+      else
+        validate_authentication!
+      end
+
       self # Return self for method chaining (Ruby idiom)
     end
 
     # Check if configuration is valid without raising (Ruby's truthiness approach)
-    def valid?
-      validate!
+    def valid?(skip_auth_unless_configured: false)
+      validate!(skip_auth_unless_configured: skip_auth_unless_configured)
       true
     rescue ConfigurationError
       false

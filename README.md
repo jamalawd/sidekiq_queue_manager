@@ -309,9 +309,14 @@ GET /live    # Server-Sent Events stream for real-time updates
 
 ### Production Recommendations
 
-1. **Authentication Required**
+1. **Enable Authentication** (disabled by default for development)
 
    ```ruby
+   # Enable basic auth
+   config.basic_auth_enabled = true
+   config.basic_auth_password = 'secure-password'
+   
+   # OR use custom authentication
    config.authentication_method = :authenticate_admin!
    ```
 

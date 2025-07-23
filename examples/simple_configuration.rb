@@ -5,11 +5,12 @@
 
 SidekiqQueueManager.configure do |config|
   # ========================================
-  # REQUIRED: Authentication (Professional Standard)
+  # AUTHENTICATION (Recommended for Production)
   # ========================================
 
-  # Basic HTTP Authentication (enabled by default like Sidekiq Web UI)
-  # You MUST set a password for security:
+  # Basic HTTP Authentication (disabled by default for easy development)
+  # Enable for production environments:
+  config.basic_auth_enabled = true
   config.basic_auth_password = 'your-secure-password-here'
   # config.basic_auth_username = 'admin'  # defaults to 'admin'
 
@@ -17,8 +18,8 @@ SidekiqQueueManager.configure do |config|
   # config.authentication_method = :authenticate_admin!
   # config.basic_auth_enabled = false
 
-  # Development only: Disable authentication (NOT recommended for production)
-  # config.basic_auth_enabled = false
+  # Development: Keep authentication disabled (default behavior)
+  # config.basic_auth_enabled = false  # This is now the default
 
   # ========================================
   # Optional Settings

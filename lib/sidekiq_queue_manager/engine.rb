@@ -88,8 +88,16 @@ module SidekiqQueueManager
     # Dependency validation with Ruby's case pattern matching
     def validate_and_configure!
       SidekiqQueueManager.validate_dependencies!
-      SidekiqQueueManager.configuration.validate!
-      Rails.logger.info '[SidekiqQueueManager] Configuration validated successfully'
+
+      # Skip authentication validation during startup unless explicitly configured
+      # This prevents crashes when gem is just added to Gemfile without configuration
+      SidekiqQueueManager.configuration.validate!(skip_auth_unless_configured: true)
+
+      if SidekiqQueueManager.configuration.explicitly_configured
+        Rails.logger.info '[SidekiqQueueManager] Configuration validated successfully'
+      else
+        Rails.logger.info '[SidekiqQueueManager] Engine loaded - authentication validation deferred until first access'
+      end
     end
 
     def handle_configuration_error(error)

@@ -59,8 +59,11 @@ module SidekiqQueueManager
     # @yield [Configuration] the configuration instance
     # @return [Configuration] the updated configuration
     def configure
-      yield(configuration) if block_given?
-      configuration.tap(&:validate!) # Ruby idiom: tap for side effects
+      return configuration unless block_given?
+
+      yield(configuration)
+      configuration.mark_as_configured! # Mark as explicitly configured
+      configuration.tap(&:validate!) # Ruby idiom: tap for side effects - full validation when explicitly configured
     end
 
     # Resets configuration to defaults (primarily for testing)
