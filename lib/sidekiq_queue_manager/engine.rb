@@ -135,7 +135,18 @@ module SidekiqQueueManager
 
     def configure_sidekiq_server_options
       Sidekiq.configure_server do |config|
-        config.options[:fetch] = Sidekiq::LimitFetch
+        # Sidekiq 7.x+ removed config.options API, check if sidekiq-limit_fetch
+        # supports the new configuration method
+        if config.respond_to?(:options) && config.options.respond_to?(:[]=)
+          # Sidekiq 6.x and earlier
+          config.options[:fetch] = Sidekiq::LimitFetch
+        else
+          # Sidekiq 7.x+ - sidekiq-limit_fetch may need different configuration
+          # or may not be compatible. Log a warning for now.
+          Rails.logger.warn "[SidekiqQueueManager] sidekiq-limit_fetch configuration skipped - " \
+                            "may not be compatible with Sidekiq #{Sidekiq::VERSION}"
+          Rails.logger.warn '[SidekiqQueueManager] Queue limits may not work as expected'
+        end
       end
     end
 

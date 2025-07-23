@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    sidekiq_queue_manager (1.0.0)
+    sidekiq_queue_manager (1.0.2)
       multi_json (~> 1.15)
       rails (>= 7.0.0, < 8.0)
       redis (>= 4.8.0, < 6.0)
