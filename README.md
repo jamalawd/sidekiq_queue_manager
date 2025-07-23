@@ -6,28 +6,35 @@
 [![Sidekiq](https://img.shields.io/badge/Sidekiq-7.0%2B-orange.svg)](https://sidekiq.org)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**Professional Sidekiq queue monitoring and management interface for Rails applications.**
+**Complete Sidekiq management suite with tabbed interface for queues, scheduled jobs, retries, and dead jobs.**
 
-A modern, real-time web interface for monitoring and managing Sidekiq queues with zero configuration required. Perfect for production environments requiring professional queue monitoring capabilities.
+A modern, real-time web interface for comprehensive Sidekiq management with zero configuration required. Features match and extend the official Sidekiq Web UI with enhanced filtering, smart number formatting, and professional design. Perfect for production environments requiring full-featured job management capabilities.
 
 ---
 
 ## ✨ Features
 
-### 🚀 **Real-Time Queue Management**
+### 🚀 **Complete Sidekiq Management Suite**
 
-- **Live Statistics** - Real-time queue metrics with 5-second auto-refresh
+- **Live Statistics** - Real-time queue metrics with smart number formatting (K, M, B, T)
 - **Universal Queue Discovery** - Automatically detects ALL Sidekiq queues
-- **Pause/Resume Operations** - Individual and bulk queue control
+- **Tabbed Interface** - Organized views for Queues, Scheduled, Retries, and Dead jobs
+- **Scheduled Jobs Management** - View, delete, enqueue, and bulk clear scheduled jobs
+- **Retry Jobs Management** - Retry now, delete, kill, or bulk operations on failed jobs
+- **Dead Jobs Management** - Resurrect, delete permanently, or bulk operations on dead jobs
 - **Advanced Queue Controls** - Set limits, block queues, manage process limits
-- **Job Management** - View, delete, and paginate through individual jobs
+- **Job Management** - View, delete, and paginate through jobs with filtering
 
 ### 🎨 **Professional Interface**
 
-- **Modern UI/UX** - Dark-mode optimized responsive design
-- **Live Pull Toggle** - Enable/disable real-time updates
-- **Custom Modal System** - Professional confirmations and prompts
-- **Mobile Responsive** - Optimized for all device sizes
+- **Modern Tabbed UI** - Organized interface with Queues, Scheduled, Retries, and Dead job views
+- **Smart Number Display** - Large numbers automatically formatted (92.9M, 1.2B, 5T) to prevent overflow
+- **Dark-mode Optimized** - Beautiful responsive design that works on all screen sizes
+- **Live Pull Toggle** - Enable/disable real-time updates with visual indicators
+- **Custom Modal System** - Professional confirmations and prompts (no browser alerts)
+- **Advanced Filtering** - Filter jobs by class name across all tabs
+- **Pagination** - Efficient browsing through large job sets
+- **Mobile Responsive** - Optimized layouts for desktop, tablet, and mobile
 - **Accessibility Ready** - ARIA labels, keyboard navigation, screen reader support
 
 ### 🔒 **Enterprise Features**
@@ -149,10 +156,41 @@ end
 
 The main dashboard provides:
 
-- **Global Statistics** - Processed, failed, busy, and enqueued job counts
-- **Queue Summary** - Total queues, paused queues, and total jobs
-- **Live Controls** - Toggle real-time updates and manual refresh
-- **Queue Table** - Detailed view of all queues with actions
+- **Enhanced Global Statistics** - Processed, failed, busy, enqueued, scheduled, retry, and dead job counts with smart formatting
+- **Tabbed Interface** - Four main sections: Queues, Scheduled, Retries, and Dead jobs with real-time counts
+- **Live Controls** - Toggle real-time updates and manual refresh with visual indicators
+- **Advanced Filtering** - Filter jobs by class name across all tabs
+- **Responsive Design** - Optimized layouts that prevent number overflow on all screen sizes
+
+### Job Management by Type
+
+#### 📅 Scheduled Jobs Tab
+
+- **View Scheduled Jobs** - Browse future jobs with execution times and time remaining
+- **Enqueue Now** - Execute scheduled jobs immediately
+- **Delete Jobs** - Remove scheduled jobs before execution
+- **Clear All** - Bulk delete all scheduled jobs (with optional filtering)
+- **Pagination** - Navigate through large lists of scheduled jobs
+- **Filtering** - Filter by job class name for easy searching
+
+#### 🔄 Retries Tab
+
+- **View Failed Jobs** - See jobs that failed and are awaiting retry
+- **Retry Now** - Execute retry jobs immediately
+- **Kill Jobs** - Move retry jobs to dead queue
+- **Delete Jobs** - Permanently remove retry jobs
+- **Retry All** - Bulk retry all failed jobs (with optional filtering)
+- **Clear All** - Bulk delete all retry jobs (with optional filtering)
+- **Progress Indicators** - Visual progress bars showing retry attempts vs limits
+
+#### ☠️ Dead Jobs Tab
+
+- **View Dead Jobs** - Browse jobs that have exhausted all retry attempts
+- **Resurrect Jobs** - Move dead jobs back to retry queue
+- **Delete Permanently** - Remove dead jobs forever
+- **Resurrect All** - Bulk resurrect all dead jobs (with optional filtering)
+- **Clear All** - Bulk delete all dead jobs permanently (with optional filtering)
+- **Error Details** - View error messages and stack traces
 
 ### Queue Operations
 
@@ -208,6 +246,36 @@ GET  /metrics              # Real-time queue statistics
 GET  /queues/summary       # Queue summary statistics
 POST /queues/pause_all     # Pause all non-critical queues
 POST /queues/resume_all    # Resume all paused queues
+```
+
+### Scheduled Jobs Endpoints
+
+```http
+GET    /scheduled                    # List scheduled jobs (paginated, filterable)
+DELETE /scheduled/:id                # Delete specific scheduled job
+POST   /scheduled/:id/enqueue        # Enqueue scheduled job immediately
+POST   /scheduled/clear              # Clear all scheduled jobs (with optional filter)
+```
+
+### Retry Jobs Endpoints
+
+```http
+GET    /retries                      # List retry jobs (paginated, filterable)
+POST   /retries/:id/retry            # Retry specific job immediately
+DELETE /retries/:id                  # Delete specific retry job
+POST   /retries/:id/kill             # Kill retry job (move to dead queue)
+POST   /retries/retry_all            # Retry all jobs (with optional filter)
+POST   /retries/clear                # Clear all retry jobs (with optional filter)
+```
+
+### Dead Jobs Endpoints
+
+```http
+GET    /dead                         # List dead jobs (paginated, filterable)
+POST   /dead/:id/resurrect           # Resurrect dead job to retry queue
+DELETE /dead/:id                     # Delete dead job permanently
+POST   /dead/resurrect_all           # Resurrect all dead jobs (with optional filter)
+POST   /dead/clear                   # Clear all dead jobs (with optional filter)
 ```
 
 ### Queue-Specific Endpoints
@@ -314,12 +382,46 @@ The gem works out-of-the-box on Heroku with no additional configuration needed.
 
 ### Compatibility
 
-- ✅ **Sidekiq Pro/Enterprise** - Full compatibility
+- ✅ **Sidekiq Web UI Feature Parity** - Matches and extends official Sidekiq Web functionality
+- ✅ **Sidekiq Pro/Enterprise** - Full compatibility with all Sidekiq editions
 - ✅ **Multi-process Sidekiq** - Advanced process management
-- ✅ **Existing Sidekiq setups** - Zero breaking changes
-- ✅ **All queue types** - Works with any Sidekiq job
-- ✅ **Docker/Kubernetes** - Container-ready
-- ✅ **Heroku/Cloud platforms** - Platform-agnostic
+- ✅ **Existing Sidekiq setups** - Zero breaking changes, drop-in replacement
+- ✅ **All job types** - Works with queued, scheduled, retry, and dead jobs
+- ✅ **Docker/Kubernetes** - Container-ready with health checks
+- ✅ **Heroku/Cloud platforms** - Platform-agnostic deployment
+
+---
+
+## 📝 Changelog
+
+### Version 1.1.0 (Latest)
+
+🎉 **Major Feature Release - Complete Sidekiq Management Suite**
+
+**New Features:**
+- ✨ **Tabbed Interface** - Organized views for Queues, Scheduled, Retries, and Dead jobs
+- 📅 **Scheduled Jobs Management** - View, delete, enqueue immediately, and bulk operations
+- 🔄 **Retry Jobs Management** - Retry now, delete, kill, and bulk operations with progress indicators
+- ☠️ **Dead Jobs Management** - Resurrect, delete permanently, and bulk operations
+- 📊 **Enhanced Statistics** - Added scheduled, retry, and dead job counts to main dashboard
+- 🔢 **Smart Number Formatting** - Large numbers automatically formatted (92.9M, 1.2B, 5T) to prevent overflow
+- 🔍 **Advanced Filtering** - Filter jobs by class name across all tabs
+- 📄 **Pagination** - Efficient browsing through large job sets
+- 💬 **Custom Modals** - Professional confirmation dialogs (no browser alerts)
+
+**API Enhancements:**
+- 🚀 **18 New REST Endpoints** - Complete API coverage for scheduled, retry, and dead jobs
+- 📡 **Real-time Tab Counts** - Live updates for all job type counts
+- 🎯 **Enhanced Error Handling** - Comprehensive error responses and validation
+
+**UI/UX Improvements:**
+- 📱 **Responsive Grid System** - Optimized 7-card stats layout that prevents overflow
+- 🎨 **Enhanced Visual Design** - Progress bars, status indicators, and improved typography
+- ⚡ **Performance Optimized** - Efficient loading and rendering of large job lists
+
+**Backward Compatibility:**
+- ✅ **Zero Breaking Changes** - All existing functionality preserved
+- 🔄 **Seamless Upgrade** - Drop-in replacement for previous versions
 
 ---
 
@@ -373,4 +475,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Created and maintained by [Jamal Awad](https://github.com/jamalawd)**  
 *Ruby enthusiast, tech lead, & architect passionate about open-source development*
 
-*Transform your Sidekiq monitoring experience with professional-grade queue management.*
+*Transform your Sidekiq experience with comprehensive job management - queues, scheduled jobs, retries, and dead jobs in one professional interface.*
