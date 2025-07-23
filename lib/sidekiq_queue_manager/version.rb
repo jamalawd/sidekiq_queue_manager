@@ -7,6 +7,6 @@ module SidekiqQueueManager
   # - MAJOR: Incompatible API changes
   # - MINOR: Add functionality in backward compatible manner
   # - PATCH: Backward compatible bug fixes
-  VERSION = '1.1.0'
+  VERSION = '1.1.1'
 end
 
