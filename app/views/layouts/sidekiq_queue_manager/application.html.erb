@@ -54,7 +54,7 @@
     <!-- Configuration for JavaScript -->
     <script type="text/javascript">
       window.SidekiqQueueManagerConfig = {
-        mountPath: '<%= sidekiq_dashboard.root_path %>',
+        mountPath: '<%= engine_mount_path %>',
         refreshInterval: <%= SidekiqQueueManager.configuration.refresh_interval %>,
         theme: '<%= SidekiqQueueManager.configuration.theme %>',
         criticalQueues: <%= SidekiqQueueManager.configuration.critical_queues.to_json.html_safe %>,

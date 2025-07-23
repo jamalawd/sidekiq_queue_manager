@@ -13,6 +13,9 @@ module SidekiqQueueManager
     # Engine-specific layout
     layout 'sidekiq_queue_manager/application'
 
+    # Make mount path available to views
+    helper_method :engine_mount_path
+
     # Authentication and security using Ruby's declarative approach
     before_action :authenticate_access
     before_action :set_security_headers
@@ -164,7 +167,7 @@ module SidekiqQueueManager
     end
 
     def direct_serving_strategy
-      mount_path = sidekiq_dashboard.root_path.chomp('/')
+      mount_path = engine_mount_path
 
       {
         css_path: "#{mount_path}/assets/sidekiq_queue_manager/application.css",
@@ -172,6 +175,16 @@ module SidekiqQueueManager
         modals_css_path: "#{mount_path}/assets/sidekiq_queue_manager/modals.css",
         use_asset_pipeline: false
       }
+    end
+
+    # Get the mount path from the engine's routes
+    def engine_mount_path
+      # Extract mount path from the current request path
+      if request.path =~ %r{^(/[^/]+)}
+        Regexp.last_match(1)
+      else
+        '/sidekiq_manager' # Default fallback
+      end
     end
 
     # Common helper for accessing main application methods
