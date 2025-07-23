@@ -25,10 +25,10 @@ Gem::Specification.new do |spec|
   # Enhanced metadata for better gem discoverability and tooling
   spec.metadata = {
     'homepage_uri' => spec.homepage,
-    'source_code_uri' => spec.homepage,
-    'changelog_uri' => "#{spec.homepage}/blob/main/CHANGELOG.md",
+    'source_code_uri' => "#{spec.homepage}/tree/master",
+    'changelog_uri' => "#{spec.homepage}/blob/master/CHANGELOG.md",
     'bug_tracker_uri' => "#{spec.homepage}/issues",
-    'documentation_uri' => "#{spec.homepage}/blob/main/README.md",
+    'documentation_uri' => "#{spec.homepage}/blob/master/README.md",
     'wiki_uri' => "#{spec.homepage}/wiki",
     'mailing_list_uri' => "#{spec.homepage}/discussions",
     'funding_uri' => "#{spec.homepage}/sponsors",
