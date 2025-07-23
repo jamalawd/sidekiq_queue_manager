@@ -118,6 +118,393 @@ module SidekiqQueueManager
       end
 
       # ========================================
+      # Scheduled Jobs Management
+      # ========================================
+
+      # Get all scheduled jobs with pagination and filtering
+      # @param page [Integer] page number (1-based)
+      # @param per_page [Integer] jobs per page (max 100)
+      # @param filter [String] optional filter by job class
+      # @return [Hash] response with scheduled jobs data
+      def scheduled_jobs(page: 1, per_page: 25, filter: nil)
+        page = page.to_i.clamp(1, Float::INFINITY)
+        per_page = per_page.to_i.clamp(1, 100)
+
+        scheduled_set = Sidekiq::ScheduledSet.new
+        total_jobs = scheduled_set.size
+
+        # Apply filtering if specified
+        jobs = if filter.present?
+                 scheduled_set.select { |job| job.klass.include?(filter) }
+               else
+                 scheduled_set.to_a
+               end
+
+        # Sort by scheduled time (ascending)
+        jobs = jobs.sort_by(&:at)
+
+        # Apply pagination
+        offset = (page - 1) * per_page
+        paginated_jobs = jobs.slice(offset, per_page) || []
+
+        formatted_jobs = paginated_jobs.map.with_index(offset + 1) do |job, position|
+          format_scheduled_job_data(job, position)
+        end
+
+        success_response('Scheduled jobs retrieved successfully',
+                         jobs: formatted_jobs,
+                         total_count: total_jobs,
+                         filtered_count: jobs.size,
+                         pagination: build_pagination_data(page, per_page, jobs.size))
+      rescue StandardError => e
+        handle_service_error(e, 'get scheduled jobs')
+      end
+
+      # Delete a scheduled job
+      # @param job_id [String] the job ID (JID)
+      # @return [Hash] response with success status
+      def delete_scheduled_job(job_id)
+        return failure_response('Invalid job ID') if job_id.blank?
+
+        scheduled_set = Sidekiq::ScheduledSet.new
+        job = scheduled_set.find_job(job_id)
+
+        return failure_response('Scheduled job not found') unless job
+
+        job.delete
+        log_operation("Scheduled job #{job_id} (#{job.klass}) deleted")
+        success_response('Scheduled job deleted successfully')
+      rescue StandardError => e
+        handle_service_error(e, "delete scheduled job #{job_id}")
+      end
+
+      # Enqueue a scheduled job immediately
+      # @param job_id [String] the job ID (JID)
+      # @return [Hash] response with success status
+      def enqueue_scheduled_job(job_id)
+        return failure_response('Invalid job ID') if job_id.blank?
+
+        scheduled_set = Sidekiq::ScheduledSet.new
+        job = scheduled_set.find_job(job_id)
+
+        return failure_response('Scheduled job not found') unless job
+
+        job.add_to_queue
+        log_operation("Scheduled job #{job_id} (#{job.klass}) enqueued immediately")
+        success_response('Scheduled job enqueued successfully')
+      rescue StandardError => e
+        handle_service_error(e, "enqueue scheduled job #{job_id}")
+      end
+
+      # Clear all scheduled jobs (with optional filtering)
+      # @param filter [String] optional filter by job class
+      # @return [Hash] response with count of cleared jobs
+      def clear_scheduled_jobs(filter: nil)
+        scheduled_set = Sidekiq::ScheduledSet.new
+        initial_count = scheduled_set.size
+
+        if filter.present?
+          jobs_to_delete = scheduled_set.select { |job| job.klass.include?(filter) }
+          jobs_to_delete.each(&:delete)
+          cleared_count = jobs_to_delete.size
+          message = "Cleared #{cleared_count} scheduled jobs matching '#{filter}'"
+        else
+          scheduled_set.clear
+          cleared_count = initial_count
+          message = "Cleared all #{cleared_count} scheduled jobs"
+        end
+
+        log_operation(message)
+        success_response(message, jobs_cleared: cleared_count)
+      rescue StandardError => e
+        handle_service_error(e, 'clear scheduled jobs')
+      end
+
+      # ========================================
+      # Retry Jobs Management
+      # ========================================
+
+      # Get all retry jobs with pagination and filtering
+      # @param page [Integer] page number (1-based)
+      # @param per_page [Integer] jobs per page (max 100)
+      # @param filter [String] optional filter by job class
+      # @return [Hash] response with retry jobs data
+      def retry_jobs(page: 1, per_page: 25, filter: nil)
+        page = page.to_i.clamp(1, Float::INFINITY)
+        per_page = per_page.to_i.clamp(1, 100)
+
+        retry_set = Sidekiq::RetrySet.new
+        total_jobs = retry_set.size
+
+        # Apply filtering if specified
+        jobs = if filter.present?
+                 retry_set.select { |job| job.klass.include?(filter) }
+               else
+                 retry_set.to_a
+               end
+
+        # Sort by next retry time (ascending)
+        jobs = jobs.sort_by { |job| job['retry_at'] || job['failed_at'] || 0 }
+
+        # Apply pagination
+        offset = (page - 1) * per_page
+        paginated_jobs = jobs.slice(offset, per_page) || []
+
+        formatted_jobs = paginated_jobs.map.with_index(offset + 1) do |job, position|
+          format_retry_job_data(job, position)
+        end
+
+        success_response('Retry jobs retrieved successfully',
+                         jobs: formatted_jobs,
+                         total_count: total_jobs,
+                         filtered_count: jobs.size,
+                         pagination: build_pagination_data(page, per_page, jobs.size))
+      rescue StandardError => e
+        handle_service_error(e, 'get retry jobs')
+      end
+
+      # Retry a job immediately
+      # @param job_id [String] the job ID (JID)
+      # @return [Hash] response with success status
+      def retry_job_now(job_id)
+        return failure_response('Invalid job ID') if job_id.blank?
+
+        retry_set = Sidekiq::RetrySet.new
+        job = retry_set.find_job(job_id)
+
+        return failure_response('Retry job not found') unless job
+
+        job.retry
+        log_operation("Retry job #{job_id} (#{job.klass}) retried immediately")
+        success_response('Job retried successfully')
+      rescue StandardError => e
+        handle_service_error(e, "retry job #{job_id}")
+      end
+
+      # Delete a retry job
+      # @param job_id [String] the job ID (JID)
+      # @return [Hash] response with success status
+      def delete_retry_job(job_id)
+        return failure_response('Invalid job ID') if job_id.blank?
+
+        retry_set = Sidekiq::RetrySet.new
+        job = retry_set.find_job(job_id)
+
+        return failure_response('Retry job not found') unless job
+
+        job.delete
+        log_operation("Retry job #{job_id} (#{job.klass}) deleted")
+        success_response('Retry job deleted successfully')
+      rescue StandardError => e
+        handle_service_error(e, "delete retry job #{job_id}")
+      end
+
+      # Kill a retry job (move to dead set)
+      # @param job_id [String] the job ID (JID)
+      # @return [Hash] response with success status
+      def kill_retry_job(job_id)
+        return failure_response('Invalid job ID') if job_id.blank?
+
+        retry_set = Sidekiq::RetrySet.new
+        job = retry_set.find_job(job_id)
+
+        return failure_response('Retry job not found') unless job
+
+        job.kill
+        log_operation("Retry job #{job_id} (#{job.klass}) moved to dead queue")
+        success_response('Job moved to dead queue successfully')
+      rescue StandardError => e
+        handle_service_error(e, "kill retry job #{job_id}")
+      end
+
+      # Clear all retry jobs (with optional filtering)
+      # @param filter [String] optional filter by job class
+      # @return [Hash] response with count of cleared jobs
+      def clear_retry_jobs(filter: nil)
+        retry_set = Sidekiq::RetrySet.new
+        initial_count = retry_set.size
+
+        if filter.present?
+          jobs_to_delete = retry_set.select { |job| job.klass.include?(filter) }
+          jobs_to_delete.each(&:delete)
+          cleared_count = jobs_to_delete.size
+          message = "Cleared #{cleared_count} retry jobs matching '#{filter}'"
+        else
+          retry_set.clear
+          cleared_count = initial_count
+          message = "Cleared all #{cleared_count} retry jobs"
+        end
+
+        log_operation(message)
+        success_response(message, jobs_cleared: cleared_count)
+      rescue StandardError => e
+        handle_service_error(e, 'clear retry jobs')
+      end
+
+      # Retry all jobs in the retry set
+      # @param filter [String] optional filter by job class
+      # @return [Hash] response with count of retried jobs
+      def retry_all_jobs(filter: nil)
+        retry_set = Sidekiq::RetrySet.new
+
+        jobs_to_retry = if filter.present?
+                          retry_set.select { |job| job.klass.include?(filter) }
+                        else
+                          retry_set.to_a
+                        end
+
+        retried_count = 0
+        jobs_to_retry.each do |job|
+          job.retry
+          retried_count += 1
+        end
+
+        message = if filter.present?
+                    "Retried #{retried_count} jobs matching '#{filter}'"
+                  else
+                    "Retried all #{retried_count} jobs"
+                  end
+
+        log_operation(message)
+        success_response(message, jobs_retried: retried_count)
+      rescue StandardError => e
+        handle_service_error(e, 'retry all jobs')
+      end
+
+      # ========================================
+      # Dead Jobs Management
+      # ========================================
+
+      # Get all dead jobs with pagination and filtering
+      # @param page [Integer] page number (1-based)
+      # @param per_page [Integer] jobs per page (max 100)
+      # @param filter [String] optional filter by job class
+      # @return [Hash] response with dead jobs data
+      def dead_jobs(page: 1, per_page: 25, filter: nil)
+        page = page.to_i.clamp(1, Float::INFINITY)
+        per_page = per_page.to_i.clamp(1, 100)
+
+        dead_set = Sidekiq::DeadSet.new
+        total_jobs = dead_set.size
+
+        # Apply filtering if specified
+        jobs = if filter.present?
+                 dead_set.select { |job| job.klass.include?(filter) }
+               else
+                 dead_set.to_a
+               end
+
+        # Sort by death time (most recent first)
+        jobs = jobs.sort_by { |job| -(job['failed_at'] || 0) }
+
+        # Apply pagination
+        offset = (page - 1) * per_page
+        paginated_jobs = jobs.slice(offset, per_page) || []
+
+        formatted_jobs = paginated_jobs.map.with_index(offset + 1) do |job, position|
+          format_dead_job_data(job, position)
+        end
+
+        success_response('Dead jobs retrieved successfully',
+                         jobs: formatted_jobs,
+                         total_count: total_jobs,
+                         filtered_count: jobs.size,
+                         pagination: build_pagination_data(page, per_page, jobs.size))
+      rescue StandardError => e
+        handle_service_error(e, 'get dead jobs')
+      end
+
+      # Resurrect a dead job (move back to retry set)
+      # @param job_id [String] the job ID (JID)
+      # @return [Hash] response with success status
+      def resurrect_dead_job(job_id)
+        return failure_response('Invalid job ID') if job_id.blank?
+
+        dead_set = Sidekiq::DeadSet.new
+        job = dead_set.find_job(job_id)
+
+        return failure_response('Dead job not found') unless job
+
+        job.retry
+        log_operation("Dead job #{job_id} (#{job.klass}) resurrected to retry queue")
+        success_response('Dead job resurrected successfully')
+      rescue StandardError => e
+        handle_service_error(e, "resurrect dead job #{job_id}")
+      end
+
+      # Delete a dead job permanently
+      # @param job_id [String] the job ID (JID)
+      # @return [Hash] response with success status
+      def delete_dead_job(job_id)
+        return failure_response('Invalid job ID') if job_id.blank?
+
+        dead_set = Sidekiq::DeadSet.new
+        job = dead_set.find_job(job_id)
+
+        return failure_response('Dead job not found') unless job
+
+        job.delete
+        log_operation("Dead job #{job_id} (#{job.klass}) deleted permanently")
+        success_response('Dead job deleted permanently')
+      rescue StandardError => e
+        handle_service_error(e, "delete dead job #{job_id}")
+      end
+
+      # Clear all dead jobs (with optional filtering)
+      # @param filter [String] optional filter by job class
+      # @return [Hash] response with count of cleared jobs
+      def clear_dead_jobs(filter: nil)
+        dead_set = Sidekiq::DeadSet.new
+        initial_count = dead_set.size
+
+        if filter.present?
+          jobs_to_delete = dead_set.select { |job| job.klass.include?(filter) }
+          jobs_to_delete.each(&:delete)
+          cleared_count = jobs_to_delete.size
+          message = "Cleared #{cleared_count} dead jobs matching '#{filter}'"
+        else
+          dead_set.clear
+          cleared_count = initial_count
+          message = "Cleared all #{cleared_count} dead jobs"
+        end
+
+        log_operation(message)
+        success_response(message, jobs_cleared: cleared_count)
+      rescue StandardError => e
+        handle_service_error(e, 'clear dead jobs')
+      end
+
+      # Resurrect all dead jobs (move back to retry set)
+      # @param filter [String] optional filter by job class
+      # @return [Hash] response with count of resurrected jobs
+      def resurrect_all_dead_jobs(filter: nil)
+        dead_set = Sidekiq::DeadSet.new
+
+        jobs_to_resurrect = if filter.present?
+                              dead_set.select { |job| job.klass.include?(filter) }
+                            else
+                              dead_set.to_a
+                            end
+
+        resurrected_count = 0
+        jobs_to_resurrect.each do |job|
+          job.retry
+          resurrected_count += 1
+        end
+
+        message = if filter.present?
+                    "Resurrected #{resurrected_count} dead jobs matching '#{filter}'"
+                  else
+                    "Resurrected all #{resurrected_count} dead jobs"
+                  end
+
+        log_operation(message)
+        success_response(message, jobs_resurrected: resurrected_count)
+      rescue StandardError => e
+        handle_service_error(e, 'resurrect all dead jobs')
+      end
+
+      # ========================================
       # Statistics and Monitoring
       # ========================================
 
@@ -362,6 +749,104 @@ module SidekiqQueueManager
           retry_count: job['retry_count'] || 0,
           queue: job.queue
         }
+      end
+
+      def format_scheduled_job_data(job, position)
+        {
+          position: position,
+          jid: job.jid,
+          class: job.klass,
+          args: job.args,
+          queue: job.queue,
+          created_at: job.created_at&.strftime('%Y-%m-%d %H:%M:%S'),
+          scheduled_at: Time.zone.at(job.at).strftime('%Y-%m-%d %H:%M:%S'),
+          scheduled_at_epoch: job.at,
+          retry_count: job['retry_count'] || 0,
+          time_until_execution: calculate_time_until(job.at),
+          priority: job['priority']
+        }
+      end
+
+      def format_retry_job_data(job, position)
+        {
+          position: position,
+          jid: job.jid,
+          class: job.klass,
+          args: job.args,
+          queue: job.queue,
+          created_at: job.created_at&.strftime('%Y-%m-%d %H:%M:%S'),
+          failed_at: job['failed_at'] ? Time.zone.at(job['failed_at']).strftime('%Y-%m-%d %H:%M:%S') : nil,
+          retry_at: job['retry_at'] ? Time.zone.at(job['retry_at']).strftime('%Y-%m-%d %H:%M:%S') : nil,
+          retry_at_epoch: job['retry_at'],
+          retry_count: job['retry_count'] || 0,
+          retry_limit: job['retry'] || 25,
+          error_message: job['error_message'],
+          error_class: job['error_class'],
+          failed_at_relative: time_ago_in_words(job['failed_at']),
+          next_retry_relative: job['retry_at'] ? time_until_in_words(job['retry_at']) : nil
+        }
+      end
+
+      def format_dead_job_data(job, position)
+        {
+          position: position,
+          jid: job.jid,
+          class: job.klass,
+          args: job.args,
+          queue: job.queue,
+          created_at: job.created_at&.strftime('%Y-%m-%d %H:%M:%S'),
+          failed_at: job['failed_at'] ? Time.zone.at(job['failed_at']).strftime('%Y-%m-%d %H:%M:%S') : nil,
+          failed_at_epoch: job['failed_at'],
+          retry_count: job['retry_count'] || 0,
+          error_message: job['error_message'],
+          error_class: job['error_class'],
+          backtrace: job['error_backtrace']&.first(5), # First 5 lines of backtrace
+          failed_at_relative: time_ago_in_words(job['failed_at'])
+        }
+      end
+
+      # Helper method to calculate time until execution for scheduled jobs
+      def calculate_time_until(scheduled_at_epoch)
+        return 'Now' if scheduled_at_epoch <= Time.current.to_f
+
+        Time.current.to_f
+        time_until_in_words(scheduled_at_epoch)
+      end
+
+      # Convert epoch time to relative "time ago" string
+      def time_ago_in_words(epoch_time)
+        return 'Unknown' unless epoch_time
+
+        time_diff = Time.current.to_f - epoch_time
+        case time_diff
+        when 0..59
+          "#{time_diff.to_i}s ago"
+        when 60..3599
+          "#{(time_diff / 60).to_i}m ago"
+        when 3600..86399
+          "#{(time_diff / 3600).to_i}h ago"
+        else
+          "#{(time_diff / 86400).to_i}d ago"
+        end
+      end
+
+      # Convert epoch time to relative "time until" string
+      def time_until_in_words(epoch_time)
+        return 'Now' unless epoch_time
+
+        time_diff = epoch_time - Time.current.to_f
+        return 'Now' if time_diff <= 0
+
+        case time_diff
+        when 0..59
+          "in #{time_diff.to_i}s"
+        when 60..3599
+          "in #{(time_diff / 60).to_i}m"
+        when 3600..86399
+          "in #{(time_diff / 3600).to_i}h"
+        else
+          "in #{(time_diff / 86400).to_i}d"
+        end
       end
 
       def build_bulk_operation_message(operation, success_count, skipped_count, failed_queues)

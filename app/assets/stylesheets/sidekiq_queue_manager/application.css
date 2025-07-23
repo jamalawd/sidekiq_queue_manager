@@ -236,8 +236,46 @@
 
 .sqm-stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(7, 1fr);
   gap: 1rem;
+}
+
+@media (max-width: 1200px) {
+  .sqm-stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .sqm-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .sqm-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sqm-stat-card {
+    padding: 0.75rem;
+    text-align: center;
+  }
+
+  .sqm-stat-value {
+    font-size: 1.5rem !important;
+  }
+
+  .sqm-stat-value[data-length="8"],
+  .sqm-stat-value[data-length="9"],
+  .sqm-stat-value[data-length="10"],
+  .sqm-stat-value[data-length="11"],
+  .sqm-stat-value[data-length="12"],
+  .sqm-stat-value[data-length="13"],
+  .sqm-stat-value[data-length="14"],
+  .sqm-stat-value[data-length="long"] {
+    font-size: 1.25rem !important;
+  }
 }
 
 .sqm-stat-card {
@@ -248,6 +286,7 @@
   transition: var(--sqm-transition);
   position: relative;
   overflow: hidden;
+  min-width: 0; /* Allow flex shrinking */
 }
 
 .sqm-stat-card:hover {
@@ -268,7 +307,28 @@
   font-weight: 700;
   color: var(--sqm-foreground);
   font-family: var(--sqm-font-mono);
-  line-height: 1;
+  line-height: 1.1;
+  word-break: break-all;
+  overflow-wrap: break-word;
+  min-width: 0;
+}
+
+/* Responsive font sizing for large numbers */
+.sqm-stat-value[data-length="8"],
+.sqm-stat-value[data-length="9"] {
+  font-size: 1.5rem;
+}
+
+.sqm-stat-value[data-length="10"],
+.sqm-stat-value[data-length="11"] {
+  font-size: 1.25rem;
+}
+
+.sqm-stat-value[data-length="12"],
+.sqm-stat-value[data-length="13"],
+.sqm-stat-value[data-length="14"],
+.sqm-stat-value[data-length="long"] {
+  font-size: 1rem;
 }
 
 /* ========================================
@@ -933,11 +993,6 @@
     gap: 0.75rem;
   }
 
-  .sqm-stats-grid {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-
   .sqm-controls {
     flex-direction: column;
     align-items: stretch;
@@ -1014,5 +1069,410 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ========================================
+   Tab Navigation System
+   ======================================== */
+
+.sqm-tabs-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  margin-bottom: 1.5rem;
+  padding: 0.25rem;
+  background: var(--sqm-muted);
+  border-radius: var(--sqm-radius);
+  border: 1px solid var(--sqm-border);
+}
+
+.sqm-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--sqm-muted-foreground);
+  background: transparent;
+  border: none;
+  border-radius: var(--sqm-radius-sm);
+  cursor: pointer;
+  transition: var(--sqm-transition);
+  white-space: nowrap;
+  min-height: 2.5rem;
+}
+
+.sqm-tab:hover {
+  color: var(--sqm-foreground);
+  background: var(--sqm-accent);
+}
+
+.sqm-tab:focus {
+  outline: 2px solid var(--sqm-ring);
+  outline-offset: 2px;
+}
+
+.sqm-tab-active {
+  color: var(--sqm-foreground);
+  background: var(--sqm-background);
+  border: 1px solid var(--sqm-border);
+  box-shadow: var(--sqm-shadow-sm);
+}
+
+.sqm-tab-active:hover {
+  background: var(--sqm-background);
+}
+
+.sqm-tab svg {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+}
+
+.sqm-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--sqm-muted-foreground);
+  background: var(--sqm-muted);
+  border-radius: 0.625rem;
+  transition: var(--sqm-transition);
+}
+
+.sqm-tab-active .sqm-tab-count {
+  color: var(--sqm-primary-foreground);
+  background: var(--sqm-primary);
+}
+
+/* ========================================
+   Tab Content System
+   ======================================== */
+
+.sqm-tab-content {
+  position: relative;
+}
+
+.sqm-tab-panel {
+  display: block;
+  outline: none;
+}
+
+.sqm-tab-panel.sqm-hidden {
+  display: none;
+}
+
+.sqm-tab-panel-active {
+  display: block;
+}
+
+/* ========================================
+   Section Controls
+   ======================================== */
+
+.sqm-section-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--sqm-card);
+  border: 1px solid var(--sqm-border);
+  border-radius: var(--sqm-radius);
+}
+
+.sqm-controls-left,
+.sqm-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sqm-filter-input {
+  width: 240px;
+  height: 2.5rem;
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+  color: var(--sqm-foreground);
+  background: var(--sqm-background);
+  border: 1px solid var(--sqm-border);
+  border-radius: var(--sqm-radius);
+  transition: var(--sqm-transition);
+}
+
+.sqm-filter-input:focus {
+  outline: none;
+  border-color: var(--sqm-ring);
+  box-shadow: 0 0 0 2px rgba(var(--sqm-ring), 0.2);
+}
+
+.sqm-filter-input::placeholder {
+  color: var(--sqm-muted-foreground);
+}
+
+/* ========================================
+   Pagination System
+   ======================================== */
+
+.sqm-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: var(--sqm-card);
+  border: 1px solid var(--sqm-border);
+  border-radius: var(--sqm-radius);
+}
+
+.sqm-pagination-info {
+  font-size: 0.875rem;
+  color: var(--sqm-muted-foreground);
+}
+
+.sqm-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sqm-pagination-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--sqm-foreground);
+  background: var(--sqm-background);
+  border: 1px solid var(--sqm-border);
+  border-radius: var(--sqm-radius);
+  cursor: pointer;
+  transition: var(--sqm-transition);
+}
+
+.sqm-pagination-btn:hover:not(:disabled) {
+  background: var(--sqm-accent);
+}
+
+.sqm-pagination-btn:disabled {
+  color: var(--sqm-muted-foreground);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.sqm-pagination-btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.sqm-pagination-current {
+  background: var(--sqm-primary);
+  color: var(--sqm-primary-foreground);
+  border-color: var(--sqm-primary);
+}
+
+.sqm-pagination-current:hover {
+  background: var(--sqm-primary);
+}
+
+/* ========================================
+   Enhanced Table Styles for New Tabs
+   ======================================== */
+
+.sqm-scheduled-section .sqm-table,
+.sqm-retries-section .sqm-table,
+.sqm-dead-section .sqm-table {
+  margin-top: 0;
+}
+
+.sqm-table .sqm-error-preview {
+  max-width: 200px;
+  font-family: var(--sqm-font-mono);
+  font-size: 0.75rem;
+  color: var(--sqm-destructive);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sqm-table .sqm-time-relative {
+  font-size: 0.75rem;
+  color: var(--sqm-muted-foreground);
+  white-space: nowrap;
+}
+
+.sqm-table .sqm-job-args {
+  max-width: 150px;
+  font-family: var(--sqm-font-mono);
+  font-size: 0.75rem;
+  color: var(--sqm-muted-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sqm-table .sqm-retry-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.sqm-table .sqm-retry-progress {
+  display: inline-block;
+  width: 60px;
+  height: 4px;
+  background: var(--sqm-muted);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.sqm-table .sqm-retry-progress-bar {
+  height: 100%;
+  background: var(--sqm-warning);
+  transition: width 0.3s ease;
+}
+
+/* ========================================
+   Job Status Indicators
+   ======================================== */
+
+.sqm-job-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: var(--sqm-radius-sm);
+}
+
+.sqm-job-status-scheduled {
+  color: var(--sqm-info-foreground);
+  background: var(--sqm-info);
+}
+
+.sqm-job-status-retrying {
+  color: var(--sqm-warning-foreground);
+  background: var(--sqm-warning);
+}
+
+.sqm-job-status-dead {
+  color: var(--sqm-destructive-foreground);
+  background: var(--sqm-destructive);
+}
+
+.sqm-job-status-dot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ========================================
+   Action Button Variants for Job Management
+   ======================================== */
+
+.sqm-btn-enqueue {
+  color: var(--sqm-info-foreground);
+  background: var(--sqm-info);
+  border-color: var(--sqm-info);
+}
+
+.sqm-btn-enqueue:hover {
+  background: hsl(199.1 89.1% 42%);
+}
+
+.sqm-btn-resurrect {
+  color: var(--sqm-success-foreground);
+  background: var(--sqm-success);
+  border-color: var(--sqm-success);
+}
+
+.sqm-btn-resurrect:hover {
+  background: hsl(142.1 76.2% 32%);
+}
+
+.sqm-btn-kill {
+  color: var(--sqm-destructive-foreground);
+  background: var(--sqm-destructive);
+  border-color: var(--sqm-destructive);
+}
+
+.sqm-btn-kill:hover {
+  background: hsl(0 84.2% 55%);
+}
+
+/* ========================================
+   Responsive Design for Tabs
+   ======================================== */
+
+@media (max-width: 768px) {
+  .sqm-tabs-nav {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .sqm-tab {
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+    padding: 0.625rem 0.75rem;
+  }
+
+  .sqm-tab span:not(.sqm-tab-count) {
+    display: none;
+  }
+
+  .sqm-section-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .sqm-controls-left,
+  .sqm-controls-right {
+    justify-content: center;
+  }
+
+  .sqm-filter-input {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .sqm-pagination {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .sqm-tab-count {
+    min-width: 1rem;
+    height: 1rem;
+    font-size: 0.625rem;
+  }
+
+  .sqm-section-controls {
+    padding: 0.75rem;
+  }
+
+  .sqm-controls-left,
+  .sqm-controls-right {
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
 }

@@ -19,6 +19,10 @@ module SidekiqQueueManager
       set_limit remove_limit set_process_limit remove_process_limit
       block unblock clear delete_queue
     ]
+    before_action :set_job_id, only: %i[
+      delete_scheduled_job enqueue_scheduled_job retry_job_now delete_retry_job
+      kill_retry_job resurrect_dead_job delete_dead_job
+    ]
 
     # Comprehensive error handling for all controller actions
     rescue_from StandardError, with: :handle_api_error
@@ -71,6 +75,193 @@ module SidekiqQueueManager
       ensure
         response.stream.close
       end
+    end
+
+    # ========================================
+    # Scheduled Jobs Management
+    # ========================================
+
+    # Get scheduled jobs with pagination and filtering
+    # GET /scheduled
+    def scheduled_jobs
+      page = params[:page] || 1
+      per_page = params[:per_page] || 25
+      filter = params[:filter]
+
+      result = QueueService.scheduled_jobs(page: page, per_page: per_page, filter: filter)
+      render json: api_response(
+        success: result[:success],
+        message: result[:message],
+        data: result
+      ), status: result[:success] ? :ok : :unprocessable_entity
+    end
+
+    # Delete a scheduled job
+    # DELETE /scheduled/:id
+    def delete_scheduled_job
+      result = QueueService.delete_scheduled_job(@job_id)
+      render json: api_response(
+        success: result[:success],
+        message: result[:message]
+      ), status: result[:success] ? :ok : :unprocessable_entity
+    end
+
+    # Enqueue a scheduled job immediately
+    # POST /scheduled/:id/enqueue
+    def enqueue_scheduled_job
+      result = QueueService.enqueue_scheduled_job(@job_id)
+      render json: api_response(
+        success: result[:success],
+        message: result[:message]
+      ), status: result[:success] ? :ok : :unprocessable_entity
+    end
+
+    # Clear all scheduled jobs
+    # POST /scheduled/clear
+    def clear_scheduled_jobs
+      filter = params[:filter]
+      result = QueueService.clear_scheduled_jobs(filter: filter)
+      render json: api_response(
+        success: result[:success],
+        message: result[:message],
+        data: result
+      ), status: result[:success] ? :ok : :unprocessable_entity
+    end
+
+    # ========================================
+    # Retry Jobs Management
+    # ========================================
+
+    # Get retry jobs with pagination and filtering
+    # GET /retries
+    def retry_jobs
+      page = params[:page] || 1
+      per_page = params[:per_page] || 25
+      filter = params[:filter]
+
+      result = QueueService.retry_jobs(page: page, per_page: per_page, filter: filter)
+      render json: api_response(
+        success: result[:success],
+        message: result[:message],
+        data: result
+      ), status: result[:success] ? :ok : :unprocessable_entity
+    end
+
+    # Retry a job immediately
+    # POST /retries/:id/retry
+    def retry_job_now
+      result = QueueService.retry_job_now(@job_id)
+      render json: api_response(
+        success: result[:success],
+        message: result[:message]
+      ), status: result[:success] ? :ok : :unprocessable_entity
+    end
+
+    # Delete a retry job
+    # DELETE /retries/:id
+    def delete_retry_job
+      result = QueueService.delete_retry_job(@job_id)
+      render json: api_response(
+        success: result[:success],
+        message: result[:message]
+      ), status: result[:success] ? :ok : :unprocessable_entity
+    end
+
+    # Kill a retry job (move to dead queue)
+    # POST /retries/:id/kill
+    def kill_retry_job
+      result = QueueService.kill_retry_job(@job_id)
+      render json: api_response(
+        success: result[:success],
+        message: result[:message]
+      ), status: result[:success] ? :ok : :unprocessable_entity
+    end
+
+    # Clear all retry jobs
+    # POST /retries/clear
+    def clear_retry_jobs
+      filter = params[:filter]
+      result = QueueService.clear_retry_jobs(filter: filter)
+      render json: api_response(
+        success: result[:success],
+        message: result[:message],
+        data: result
+      ), status: result[:success] ? :ok : :unprocessable_entity
+    end
+
+    # Retry all jobs in retry queue
+    # POST /retries/retry_all
+    def retry_all_jobs
+      filter = params[:filter]
+      result = QueueService.retry_all_jobs(filter: filter)
+      render json: api_response(
+        success: result[:success],
+        message: result[:message],
+        data: result
+      ), status: result[:success] ? :ok : :unprocessable_entity
+    end
+
+    # ========================================
+    # Dead Jobs Management
+    # ========================================
+
+    # Get dead jobs with pagination and filtering
+    # GET /dead
+    def dead_jobs
+      page = params[:page] || 1
+      per_page = params[:per_page] || 25
+      filter = params[:filter]
+
+      result = QueueService.dead_jobs(page: page, per_page: per_page, filter: filter)
+      render json: api_response(
+        success: result[:success],
+        message: result[:message],
+        data: result
+      ), status: result[:success] ? :ok : :unprocessable_entity
+    end
+
+    # Resurrect a dead job
+    # POST /dead/:id/resurrect
+    def resurrect_dead_job
+      result = QueueService.resurrect_dead_job(@job_id)
+      render json: api_response(
+        success: result[:success],
+        message: result[:message]
+      ), status: result[:success] ? :ok : :unprocessable_entity
+    end
+
+    # Delete a dead job permanently
+    # DELETE /dead/:id
+    def delete_dead_job
+      result = QueueService.delete_dead_job(@job_id)
+      render json: api_response(
+        success: result[:success],
+        message: result[:message]
+      ), status: result[:success] ? :ok : :unprocessable_entity
+    end
+
+    # Clear all dead jobs
+    # POST /dead/clear
+    def clear_dead_jobs
+      filter = params[:filter]
+      result = QueueService.clear_dead_jobs(filter: filter)
+      render json: api_response(
+        success: result[:success],
+        message: result[:message],
+        data: result
+      ), status: result[:success] ? :ok : :unprocessable_entity
+    end
+
+    # Resurrect all dead jobs
+    # POST /dead/resurrect_all
+    def resurrect_all_dead_jobs
+      filter = params[:filter]
+      result = QueueService.resurrect_all_dead_jobs(filter: filter)
+      render json: api_response(
+        success: result[:success],
+        message: result[:message],
+        data: result
+      ), status: result[:success] ? :ok : :unprocessable_entity
     end
 
     # ========================================
@@ -291,6 +482,17 @@ module SidekiqQueueManager
 
       render json: api_error_response("Invalid queue name: #{@queue_name}"), status: :not_found
       nil
+    end
+
+    def set_job_id
+      @job_id = params[:id] || params[:job_id]
+
+      if @job_id.blank?
+        render json: api_error_response('Job ID is required'), status: :bad_request
+        return
+      end
+
+      @job_id
     end
 
     def available_queue_names

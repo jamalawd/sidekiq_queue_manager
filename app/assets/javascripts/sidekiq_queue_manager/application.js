@@ -62,7 +62,13 @@ class SidekiqQueueManagerUI {
       retryCount: 0,
       lastUpdate: null,
       livePullEnabled: false,
-      currentTheme: this.getStoredTheme() || this.gemConfig.theme
+      currentTheme: this.getStoredTheme() || this.gemConfig.theme,
+      activeTab: 'queues',
+      pagination: {
+        scheduled: { page: 1, per_page: 25, filter: '' },
+        retries: { page: 1, per_page: 25, filter: '' },
+        dead: { page: 1, per_page: 25, filter: '' }
+      }
     };
 
     this.currentMenuCloseHandler = null;
@@ -81,6 +87,7 @@ class SidekiqQueueManagerUI {
     this.initializeTheme();
     this.cacheElements();
     this.setupEventListeners();
+    this.setupTabSystem();
     this.initializeRefreshControl();
     this.loadInitialData();
     this.injectActionsMenuStyles();
@@ -215,9 +222,18 @@ class SidekiqQueueManagerUI {
       failed: '#sqm-failed',
       busy: '#sqm-busy',
       enqueued: '#sqm-enqueued',
+      'scheduled-jobs': '#sqm-scheduled-jobs',
+      'retry-jobs': '#sqm-retry-jobs',
+      'dead-jobs': '#sqm-dead-jobs',
       totalQueues: '#sqm-total-queues',
       pausedQueues: '#sqm-paused-queues',
       totalJobs: '#sqm-total-jobs',
+
+      // Tab counts
+      'sqm-queues-count': '#sqm-queues-count',
+      'sqm-scheduled-count': '#sqm-scheduled-count',
+      'sqm-retries-count': '#sqm-retries-count',
+      'sqm-dead-count': '#sqm-dead-count',
 
       // Table elements
       tableBody: '#sqm-table-body',
@@ -260,6 +276,15 @@ class SidekiqQueueManagerUI {
     if (element) {
       element.addEventListener(event, handler);
       this.eventHandlers.set(`${elementKey}_${event}`, { element, event, handler });
+    }
+  }
+
+  addEventListener(element, event, handler) {
+    if (element) {
+      element.addEventListener(event, handler);
+      // Generate a unique key for tracking
+      const key = `dynamic_${Date.now()}_${Math.random()}`;
+      this.eventHandlers.set(key, { element, event, handler });
     }
   }
 
@@ -491,23 +516,63 @@ class SidekiqQueueManagerUI {
       this.updateQueuesTable(data.queues);
     }
 
+    // Update tab counts
+    this.updateTabCounts(data);
+
     this.updateTimestamp(data.timestamp);
   }
 
   updateGlobalStats(stats) {
-    const elements = {
-      processed: stats.processed?.toLocaleString() || '0',
-      failed: stats.failed?.toLocaleString() || '0',
-      busy: stats.busy?.toString() || '0',
-      enqueued: stats.enqueued?.toLocaleString() || '0'
+    const statsData = {
+      processed: stats.processed || 0,
+      failed: stats.failed || 0,
+      busy: stats.busy || 0,
+      enqueued: stats.enqueued || 0,
+      'scheduled-jobs': stats.scheduled_size || 0,
+      'retry-jobs': stats.retry_size || 0,
+      'dead-jobs': stats.dead_size || 0
     };
 
-    Object.entries(elements).forEach(([key, value]) => {
+    Object.entries(statsData).forEach(([key, rawValue]) => {
       const element = this.elements.get(key);
       if (element) {
-        element.textContent = value;
+        const formattedValue = this.formatLargeNumber(rawValue);
+        element.textContent = formattedValue;
+
+        // Add data-length attribute for responsive font sizing
+        const valueLength = formattedValue.replace(/,/g, '').length;
+        if (valueLength >= 15) {
+          element.setAttribute('data-length', 'long');
+        } else if (valueLength >= 8) {
+          element.setAttribute('data-length', valueLength.toString());
+        } else {
+          element.removeAttribute('data-length');
+        }
       }
     });
+  }
+
+  // Format large numbers with appropriate abbreviations and locale formatting
+  formatLargeNumber(num) {
+    const number = parseInt(num) || 0;
+
+    // Handle zero and negative numbers
+    if (number === 0) return '0';
+    if (number < 0) return number.toLocaleString();
+
+    // For very large numbers, use abbreviations
+    if (number >= 1000000000000) { // Trillion
+      return (number / 1000000000000).toFixed(1).replace(/\.0$/, '') + 'T';
+    } else if (number >= 1000000000) { // Billion
+      return (number / 1000000000).toFixed(1).replace(/\.0$/, '') + 'B';
+    } else if (number >= 1000000) { // Million
+      return (number / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    } else if (number >= 100000) { // For numbers 100k+, use abbreviation
+      return (number / 1000).toFixed(0) + 'K';
+    } else {
+      // For smaller numbers, use locale formatting with commas
+      return number.toLocaleString();
+    }
   }
 
   updateQueuesTable(queues) {
@@ -519,9 +584,9 @@ class SidekiqQueueManagerUI {
     const pausedQueues = queueArray.filter(q => q.paused).length;
 
     // Update counters
-    this.updateElement('totalQueues', totalQueues.toString());
-    this.updateElement('pausedQueues', pausedQueues.toString());
-    this.updateElement('totalJobs', queueArray.reduce((sum, q) => sum + (q.size || 0), 0).toLocaleString());
+    this.updateElement('totalQueues', totalQueues);
+    this.updateElement('pausedQueues', pausedQueues);
+    this.updateElement('totalJobs', queueArray.reduce((sum, q) => sum + (q.size || 0), 0));
 
     // Update table rows
     tbody.innerHTML = queueArray.map(queue => this.renderQueueRow(queue)).join('');
@@ -1791,7 +1856,30 @@ class SidekiqQueueManagerUI {
   updateElement(key, value) {
     const element = this.elements.get(key);
     if (element) {
-      element.textContent = value;
+      // Format numbers if the element is a stat value
+      if (element.classList.contains('sqm-stat-value') || element.classList.contains('sqm-tab-count')) {
+        const numValue = parseInt(value);
+        if (!isNaN(numValue)) {
+          const formattedValue = this.formatLargeNumber(numValue);
+          element.textContent = formattedValue;
+
+          // Add data-length attribute for responsive font sizing (only for stat values)
+          if (element.classList.contains('sqm-stat-value')) {
+            const valueLength = formattedValue.replace(/,/g, '').length;
+            if (valueLength >= 15) {
+              element.setAttribute('data-length', 'long');
+            } else if (valueLength >= 8) {
+              element.setAttribute('data-length', valueLength.toString());
+            } else {
+              element.removeAttribute('data-length');
+            }
+          }
+        } else {
+          element.textContent = value;
+        }
+      } else {
+        element.textContent = value;
+      }
     }
   }
 
@@ -1826,6 +1914,765 @@ class SidekiqQueueManagerUI {
     } else {
       this.showError(`Failed to load data: ${error.message}`);
       this.state.retryCount = 0;
+    }
+  }
+
+  // ========================================
+  // Tab Management System
+  // ========================================
+
+  setupTabSystem() {
+    const tabButtons = document.querySelectorAll('.sqm-tab');
+    const tabPanels = document.querySelectorAll('.sqm-tab-panel');
+
+    tabButtons.forEach(button => {
+      this.addEventListener(button, 'click', (e) => {
+        e.preventDefault();
+        const tabName = button.getAttribute('data-tab');
+        this.switchTab(tabName);
+      });
+    });
+
+    // Setup filter and action buttons for each tab
+    this.setupScheduledJobHandlers();
+    this.setupRetryJobHandlers();
+    this.setupDeadJobHandlers();
+  }
+
+  switchTab(tabName) {
+    if (this.state.activeTab === tabName) return;
+
+    // Update active tab state
+    this.state.activeTab = tabName;
+
+    // Update tab button states
+    document.querySelectorAll('.sqm-tab').forEach(button => {
+      const isActive = button.getAttribute('data-tab') === tabName;
+      button.classList.toggle('sqm-tab-active', isActive);
+      button.setAttribute('aria-selected', isActive);
+    });
+
+    // Update panel visibility
+    document.querySelectorAll('.sqm-tab-panel').forEach(panel => {
+      const panelTab = panel.id.replace('sqm-', '').replace('-panel', '');
+      const isActive = panelTab === tabName;
+      panel.classList.toggle('sqm-hidden', !isActive);
+      panel.classList.toggle('sqm-tab-panel-active', isActive);
+    });
+
+    // Load data for the active tab
+    this.loadTabData(tabName);
+  }
+
+  loadTabData(tabName) {
+    switch (tabName) {
+      case 'queues':
+        this.refreshQueues();
+        break;
+      case 'scheduled':
+        this.loadScheduledJobs();
+        break;
+      case 'retries':
+        this.loadRetryJobs();
+        break;
+      case 'dead':
+        this.loadDeadJobs();
+        break;
+    }
+  }
+
+  updateTabCounts(data) {
+    // Update tab counts from data
+    if (data.queues) {
+      const queuesCount = Object.keys(data.queues).length;
+      this.updateElement('sqm-queues-count', queuesCount);
+    }
+
+    if (data.global_stats) {
+      const scheduledCount = data.global_stats.scheduled_size || 0;
+      const retriesCount = data.global_stats.retry_size || 0;
+      const deadCount = data.global_stats.dead_size || 0;
+
+      this.updateElement('sqm-scheduled-count', scheduledCount);
+      this.updateElement('sqm-retries-count', retriesCount);
+      this.updateElement('sqm-dead-count', deadCount);
+    }
+  }
+
+  // ========================================
+  // Scheduled Jobs Management
+  // ========================================
+
+  setupScheduledJobHandlers() {
+    // Filter button
+    const filterBtn = document.getElementById('sqm-scheduled-apply-filter');
+    const filterInput = document.getElementById('sqm-scheduled-filter');
+    const clearBtn = document.getElementById('sqm-clear-scheduled-btn');
+
+    if (filterBtn && filterInput) {
+      this.addEventListener(filterBtn, 'click', () => {
+        this.state.pagination.scheduled.filter = filterInput.value;
+        this.state.pagination.scheduled.page = 1;
+        this.loadScheduledJobs();
+      });
+
+      this.addEventListener(filterInput, 'keypress', (e) => {
+        if (e.key === 'Enter') {
+          this.state.pagination.scheduled.filter = filterInput.value;
+          this.state.pagination.scheduled.page = 1;
+          this.loadScheduledJobs();
+        }
+      });
+    }
+
+    if (clearBtn) {
+      this.addEventListener(clearBtn, 'click', async () => {
+        await this.showConfirmation('Are you sure you want to clear all scheduled jobs?', () => {
+          this.clearScheduledJobs();
+        });
+      });
+    }
+  }
+
+  async loadScheduledJobs() {
+    try {
+      const params = new URLSearchParams(this.state.pagination.scheduled);
+      const response = await fetch(`${this.gemConfig.mountPath}/scheduled?${params}`);
+      const result = await response.json();
+
+      if (result.success) {
+        this.renderScheduledJobs(result.data);
+        this.renderPagination('scheduled', result.data.pagination);
+        // Update tab count
+        this.updateElement('sqm-scheduled-count', result.data.total_count || 0);
+      } else {
+        this.showNotification(result.message, 'error');
+      }
+    } catch (error) {
+      this.showNotification('Failed to load scheduled jobs', 'error');
+    }
+  }
+
+  renderScheduledJobs(data) {
+    const tbody = document.getElementById('sqm-scheduled-table-body');
+    if (!tbody) return;
+
+    if (!data.jobs || data.jobs.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" style="text-align: center; padding: 2rem; color: var(--sqm-muted-foreground);">
+            No scheduled jobs found
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = data.jobs.map(job => `
+      <tr>
+        <td>
+          <div class="sqm-job-class">${job.class}</div>
+          <div class="sqm-job-args" title="${JSON.stringify(job.args)}">${JSON.stringify(job.args)}</div>
+        </td>
+        <td>${job.queue}</td>
+        <td style="text-align: right;">
+          <div>${job.scheduled_at}</div>
+          <div class="sqm-time-relative">${job.time_until_execution}</div>
+        </td>
+        <td style="text-align: right;">
+          <span class="sqm-time-relative">${job.time_until_execution}</span>
+        </td>
+        <td style="text-align: right;">
+          <div class="sqm-action-buttons">
+            <button class="sqm-btn sqm-btn-sm sqm-btn-enqueue"
+                    onclick="window.sidekiqQueueManager.enqueueScheduledJob('${job.jid}')"
+                    title="Enqueue now">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 0.875rem; height: 0.875rem;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+              </svg>
+            </button>
+            <button class="sqm-btn sqm-btn-sm sqm-btn-destructive"
+                    onclick="window.sidekiqQueueManager.deleteScheduledJob('${job.jid}')"
+                    title="Delete">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 0.875rem; height: 0.875rem;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+              </svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  async enqueueScheduledJob(jobId) {
+    try {
+      const response = await fetch(`${this.gemConfig.mountPath}/scheduled/${jobId}/enqueue`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        this.showNotification('Job enqueued successfully', 'success');
+        this.loadScheduledJobs();
+      } else {
+        this.showNotification(result.message, 'error');
+      }
+    } catch (error) {
+      this.showNotification('Failed to enqueue job', 'error');
+    }
+  }
+
+  async deleteScheduledJob(jobId) {
+    try {
+      const response = await fetch(`${this.gemConfig.mountPath}/scheduled/${jobId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        this.showNotification('Job deleted successfully', 'success');
+        this.loadScheduledJobs();
+      } else {
+        this.showNotification(result.message, 'error');
+      }
+    } catch (error) {
+      this.showNotification('Failed to delete job', 'error');
+    }
+  }
+
+  async clearScheduledJobs() {
+    try {
+      const filter = this.state.pagination.scheduled.filter;
+      const body = filter ? JSON.stringify({ filter }) : null;
+
+      const response = await fetch(`${this.gemConfig.mountPath}/scheduled/clear`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        this.showNotification(result.message, 'success');
+        this.loadScheduledJobs();
+      } else {
+        this.showNotification(result.message, 'error');
+      }
+    } catch (error) {
+      this.showNotification('Failed to clear scheduled jobs', 'error');
+    }
+  }
+
+  // ========================================
+  // Retry Jobs Management
+  // ========================================
+
+  setupRetryJobHandlers() {
+    // Filter button
+    const filterBtn = document.getElementById('sqm-retries-apply-filter');
+    const filterInput = document.getElementById('sqm-retries-filter');
+    const retryAllBtn = document.getElementById('sqm-retry-all-btn');
+    const clearBtn = document.getElementById('sqm-clear-retries-btn');
+
+    if (filterBtn && filterInput) {
+      this.addEventListener(filterBtn, 'click', () => {
+        this.state.pagination.retries.filter = filterInput.value;
+        this.state.pagination.retries.page = 1;
+        this.loadRetryJobs();
+      });
+
+      this.addEventListener(filterInput, 'keypress', (e) => {
+        if (e.key === 'Enter') {
+          this.state.pagination.retries.filter = filterInput.value;
+          this.state.pagination.retries.page = 1;
+          this.loadRetryJobs();
+        }
+      });
+    }
+
+    if (retryAllBtn) {
+      this.addEventListener(retryAllBtn, 'click', async () => {
+        await this.showConfirmation('Are you sure you want to retry all jobs?', () => {
+          this.retryAllJobs();
+        });
+      });
+    }
+
+    if (clearBtn) {
+      this.addEventListener(clearBtn, 'click', async () => {
+        await this.showConfirmation('Are you sure you want to clear all retry jobs?', () => {
+          this.clearRetryJobs();
+        });
+      });
+    }
+  }
+
+  async loadRetryJobs() {
+    try {
+      const params = new URLSearchParams(this.state.pagination.retries);
+      const response = await fetch(`${this.gemConfig.mountPath}/retries?${params}`);
+      const result = await response.json();
+
+      if (result.success) {
+        this.renderRetryJobs(result.data);
+        this.renderPagination('retries', result.data.pagination);
+        // Update tab count
+        this.updateElement('sqm-retries-count', result.data.total_count || 0);
+      } else {
+        this.showNotification(result.message, 'error');
+      }
+    } catch (error) {
+      this.showNotification('Failed to load retry jobs', 'error');
+    }
+  }
+
+  renderRetryJobs(data) {
+    const tbody = document.getElementById('sqm-retries-table-body');
+    if (!tbody) return;
+
+    if (!data.jobs || data.jobs.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align: center; padding: 2rem; color: var(--sqm-muted-foreground);">
+            No retry jobs found
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = data.jobs.map(job => `
+      <tr>
+        <td>
+          <div class="sqm-job-class">${job.class}</div>
+          <div class="sqm-error-preview" title="${job.error_message || 'No error message'}">${job.error_class || 'Unknown Error'}</div>
+        </td>
+        <td>${job.queue}</td>
+        <td style="text-align: right;">
+          <div>${job.failed_at || 'Unknown'}</div>
+          <div class="sqm-time-relative">${job.failed_at_relative || ''}</div>
+        </td>
+        <td style="text-align: right;">
+          <div>${job.retry_at || 'Now'}</div>
+          <div class="sqm-time-relative">${job.next_retry_relative || ''}</div>
+        </td>
+        <td style="text-align: right;">
+          <div class="sqm-retry-count">
+            ${job.retry_count}/${job.retry_limit}
+            <div class="sqm-retry-progress">
+              <div class="sqm-retry-progress-bar" style="width: ${(job.retry_count / job.retry_limit) * 100}%"></div>
+            </div>
+          </div>
+        </td>
+        <td style="text-align: right;">
+          <div class="sqm-action-buttons">
+            <button class="sqm-btn sqm-btn-sm sqm-btn-success"
+                    onclick="window.sidekiqQueueManager.retryJobNow('${job.jid}')"
+                    title="Retry now">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 0.875rem; height: 0.875rem;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+              </svg>
+            </button>
+            <button class="sqm-btn sqm-btn-sm sqm-btn-kill"
+                    onclick="window.sidekiqQueueManager.killRetryJob('${job.jid}')"
+                    title="Move to dead queue">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 0.875rem; height: 0.875rem;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+            </button>
+            <button class="sqm-btn sqm-btn-sm sqm-btn-destructive"
+                    onclick="window.sidekiqQueueManager.deleteRetryJob('${job.jid}')"
+                    title="Delete">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 0.875rem; height: 0.875rem;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+              </svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  async retryJobNow(jobId) {
+    try {
+      const response = await fetch(`${this.gemConfig.mountPath}/retries/${jobId}/retry`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        this.showNotification('Job retried successfully', 'success');
+        this.loadRetryJobs();
+      } else {
+        this.showNotification(result.message, 'error');
+      }
+    } catch (error) {
+      this.showNotification('Failed to retry job', 'error');
+    }
+  }
+
+  async killRetryJob(jobId) {
+    try {
+      const response = await fetch(`${this.gemConfig.mountPath}/retries/${jobId}/kill`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        this.showNotification('Job moved to dead queue', 'success');
+        this.loadRetryJobs();
+      } else {
+        this.showNotification(result.message, 'error');
+      }
+    } catch (error) {
+      this.showNotification('Failed to kill job', 'error');
+    }
+  }
+
+  async deleteRetryJob(jobId) {
+    try {
+      const response = await fetch(`${this.gemConfig.mountPath}/retries/${jobId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        this.showNotification('Job deleted successfully', 'success');
+        this.loadRetryJobs();
+      } else {
+        this.showNotification(result.message, 'error');
+      }
+    } catch (error) {
+      this.showNotification('Failed to delete job', 'error');
+    }
+  }
+
+  async retryAllJobs() {
+    try {
+      const filter = this.state.pagination.retries.filter;
+      const body = filter ? JSON.stringify({ filter }) : null;
+
+      const response = await fetch(`${this.gemConfig.mountPath}/retries/retry_all`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        this.showNotification(result.message, 'success');
+        this.loadRetryJobs();
+      } else {
+        this.showNotification(result.message, 'error');
+      }
+    } catch (error) {
+      this.showNotification('Failed to retry all jobs', 'error');
+    }
+  }
+
+  async clearRetryJobs() {
+    try {
+      const filter = this.state.pagination.retries.filter;
+      const body = filter ? JSON.stringify({ filter }) : null;
+
+      const response = await fetch(`${this.gemConfig.mountPath}/retries/clear`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        this.showNotification(result.message, 'success');
+        this.loadRetryJobs();
+      } else {
+        this.showNotification(result.message, 'error');
+      }
+    } catch (error) {
+      this.showNotification('Failed to clear retry jobs', 'error');
+    }
+  }
+
+  // ========================================
+  // Dead Jobs Management
+  // ========================================
+
+  setupDeadJobHandlers() {
+    // Filter button
+    const filterBtn = document.getElementById('sqm-dead-apply-filter');
+    const filterInput = document.getElementById('sqm-dead-filter');
+    const resurrectAllBtn = document.getElementById('sqm-resurrect-all-btn');
+    const clearBtn = document.getElementById('sqm-clear-dead-btn');
+
+    if (filterBtn && filterInput) {
+      this.addEventListener(filterBtn, 'click', () => {
+        this.state.pagination.dead.filter = filterInput.value;
+        this.state.pagination.dead.page = 1;
+        this.loadDeadJobs();
+      });
+
+      this.addEventListener(filterInput, 'keypress', (e) => {
+        if (e.key === 'Enter') {
+          this.state.pagination.dead.filter = filterInput.value;
+          this.state.pagination.dead.page = 1;
+          this.loadDeadJobs();
+        }
+      });
+    }
+
+    if (resurrectAllBtn) {
+      this.addEventListener(resurrectAllBtn, 'click', async () => {
+        await this.showConfirmation('Are you sure you want to resurrect all dead jobs?', () => {
+          this.resurrectAllDeadJobs();
+        });
+      });
+    }
+
+    if (clearBtn) {
+      this.addEventListener(clearBtn, 'click', async () => {
+        await this.showConfirmation('Are you sure you want to permanently delete all dead jobs?', () => {
+          this.clearDeadJobs();
+        });
+      });
+    }
+  }
+
+  async loadDeadJobs() {
+    try {
+      const params = new URLSearchParams(this.state.pagination.dead);
+      const response = await fetch(`${this.gemConfig.mountPath}/dead?${params}`);
+      const result = await response.json();
+
+      if (result.success) {
+        this.renderDeadJobs(result.data);
+        this.renderPagination('dead', result.data.pagination);
+        // Update tab count
+        this.updateElement('sqm-dead-count', result.data.total_count || 0);
+      } else {
+        this.showNotification(result.message, 'error');
+      }
+    } catch (error) {
+      this.showNotification('Failed to load dead jobs', 'error');
+    }
+  }
+
+  renderDeadJobs(data) {
+    const tbody = document.getElementById('sqm-dead-table-body');
+    if (!tbody) return;
+
+    if (!data.jobs || data.jobs.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align: center; padding: 2rem; color: var(--sqm-muted-foreground);">
+            No dead jobs found
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = data.jobs.map(job => `
+      <tr>
+        <td>
+          <div class="sqm-job-class">${job.class}</div>
+          <div class="sqm-job-args" title="${JSON.stringify(job.args)}">${JSON.stringify(job.args)}</div>
+        </td>
+        <td>${job.queue}</td>
+        <td style="text-align: right;">
+          <div>${job.failed_at || 'Unknown'}</div>
+          <div class="sqm-time-relative">${job.failed_at_relative || ''}</div>
+        </td>
+        <td style="text-align: right;">
+          <span class="sqm-retry-count">${job.retry_count}</span>
+        </td>
+        <td style="text-align: right;">
+          <div class="sqm-error-preview" title="${job.error_message || 'No error message'}">${job.error_class || 'Unknown Error'}</div>
+        </td>
+        <td style="text-align: right;">
+          <div class="sqm-action-buttons">
+            <button class="sqm-btn sqm-btn-sm sqm-btn-resurrect"
+                    onclick="window.sidekiqQueueManager.resurrectDeadJob('${job.jid}')"
+                    title="Resurrect to retry queue">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 0.875rem; height: 0.875rem;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+              </svg>
+            </button>
+            <button class="sqm-btn sqm-btn-sm sqm-btn-destructive"
+                    onclick="window.sidekiqQueueManager.deleteDeadJob('${job.jid}')"
+                    title="Delete permanently">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 0.875rem; height: 0.875rem;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+              </svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  async resurrectDeadJob(jobId) {
+    try {
+      const response = await fetch(`${this.gemConfig.mountPath}/dead/${jobId}/resurrect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        this.showNotification('Job resurrected successfully', 'success');
+        this.loadDeadJobs();
+      } else {
+        this.showNotification(result.message, 'error');
+      }
+    } catch (error) {
+      this.showNotification('Failed to resurrect job', 'error');
+    }
+  }
+
+  async deleteDeadJob(jobId) {
+    try {
+      const response = await fetch(`${this.gemConfig.mountPath}/dead/${jobId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        this.showNotification('Job deleted permanently', 'success');
+        this.loadDeadJobs();
+      } else {
+        this.showNotification(result.message, 'error');
+      }
+    } catch (error) {
+      this.showNotification('Failed to delete job', 'error');
+    }
+  }
+
+  async resurrectAllDeadJobs() {
+    try {
+      const filter = this.state.pagination.dead.filter;
+      const body = filter ? JSON.stringify({ filter }) : null;
+
+      const response = await fetch(`${this.gemConfig.mountPath}/dead/resurrect_all`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        this.showNotification(result.message, 'success');
+        this.loadDeadJobs();
+      } else {
+        this.showNotification(result.message, 'error');
+      }
+    } catch (error) {
+      this.showNotification('Failed to resurrect all jobs', 'error');
+    }
+  }
+
+  async clearDeadJobs() {
+    try {
+      const filter = this.state.pagination.dead.filter;
+      const body = filter ? JSON.stringify({ filter }) : null;
+
+      const response = await fetch(`${this.gemConfig.mountPath}/dead/clear`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        this.showNotification(result.message, 'success');
+        this.loadDeadJobs();
+      } else {
+        this.showNotification(result.message, 'error');
+      }
+    } catch (error) {
+      this.showNotification('Failed to clear dead jobs', 'error');
+    }
+  }
+
+  // ========================================
+  // Pagination System
+  // ========================================
+
+  renderPagination(tabName, pagination) {
+    const container = document.getElementById(`sqm-${tabName}-pagination`);
+    if (!container || !pagination) return;
+
+    const { current_page, total_pages, per_page, total_jobs, has_previous, has_next } = pagination;
+
+    if (total_pages <= 1) {
+      container.innerHTML = '';
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="sqm-pagination-info">
+        Showing ${((current_page - 1) * per_page) + 1}-${Math.min(current_page * per_page, total_jobs)} of ${total_jobs} jobs
+      </div>
+      <div class="sqm-pagination-controls">
+        <button class="sqm-pagination-btn" ${!has_previous ? 'disabled' : ''}
+                onclick="window.sidekiqQueueManager.changePage('${tabName}', ${current_page - 1})">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+        </button>
+        ${this.generatePageNumbers(current_page, total_pages, tabName)}
+        <button class="sqm-pagination-btn" ${!has_next ? 'disabled' : ''}
+                onclick="window.sidekiqQueueManager.changePage('${tabName}', ${current_page + 1})">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+          </svg>
+        </button>
+      </div>
+    `;
+  }
+
+  generatePageNumbers(current, total, tabName) {
+    const pages = [];
+    const maxVisible = 5;
+
+    let start = Math.max(1, current - Math.floor(maxVisible / 2));
+    let end = Math.min(total, start + maxVisible - 1);
+
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+      const isActive = i === current;
+      pages.push(`
+        <button class="sqm-pagination-btn ${isActive ? 'sqm-pagination-current' : ''}"
+                onclick="window.sidekiqQueueManager.changePage('${tabName}', ${i})">
+          ${i}
+        </button>
+      `);
+    }
+
+    return pages.join('');
+  }
+
+  changePage(tabName, page) {
+    this.state.pagination[tabName].page = page;
+    this.loadTabData(tabName);
+  }
+
+  // ========================================
+  // Confirmation Dialog
+  // ========================================
+
+  async showConfirmation(message, onConfirm) {
+    const confirmed = await this.showCustomConfirm('Confirm Action', message);
+    if (confirmed) {
+      onConfirm();
     }
   }
 

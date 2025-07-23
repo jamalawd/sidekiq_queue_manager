@@ -30,6 +30,21 @@
       <div class="sqm-stat-label">Enqueued Jobs</div>
       <div class="sqm-stat-value" id="sqm-enqueued">0</div>
     </div>
+
+    <div class="sqm-stat-card">
+      <div class="sqm-stat-label">Scheduled Jobs</div>
+      <div class="sqm-stat-value" id="sqm-scheduled-jobs">0</div>
+    </div>
+
+    <div class="sqm-stat-card">
+      <div class="sqm-stat-label">Retry Jobs</div>
+      <div class="sqm-stat-value" id="sqm-retry-jobs">0</div>
+    </div>
+
+    <div class="sqm-stat-card">
+      <div class="sqm-stat-label">Dead Jobs</div>
+      <div class="sqm-stat-value" id="sqm-dead-jobs">0</div>
+    </div>
   </div>
 </section>
 
@@ -134,25 +149,278 @@
 
 <!-- Main Content -->
 <div id="sqm-content" class="sqm-hidden">
-  <!-- Queues Table -->
-  <section class="sqm-queues-section" aria-label="Queue Details">
-    <div class="sqm-table-container">
-      <table class="sqm-table" id="sqm-queues-table">
-        <thead>
-          <tr>
-            <th scope="col">Queue Name</th>
-            <th scope="col" style="text-align: right;">Size</th>
-            <th scope="col" style="text-align: right;">Workers/Limits</th>
-            <th scope="col" style="text-align: right;">Latency</th>
-            <th scope="col" style="text-align: right;">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="sqm-table-body">
-          <!-- Queue rows will be inserted here by JavaScript -->
-        </tbody>
-      </table>
+  <!-- Navigation Tabs -->
+  <nav class="sqm-tabs-nav" role="tablist" aria-label="Job management sections">
+    <button
+      class="sqm-tab sqm-tab-active"
+      role="tab"
+      aria-selected="true"
+      aria-controls="sqm-queues-panel"
+      id="sqm-queues-tab"
+      data-tab="queues">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1rem; height: 1rem;">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M12 17.25h8.25M3.75 17.25h.01v.01h-.01v-.01ZM7.5 17.25h.01v.01H7.5v-.01ZM11.25 17.25h.01v.01h-.01v-.01Z" />
+      </svg>
+      Queues
+      <span class="sqm-tab-count" id="sqm-queues-count">0</span>
+    </button>
+
+    <button
+      class="sqm-tab"
+      role="tab"
+      aria-selected="false"
+      aria-controls="sqm-scheduled-panel"
+      id="sqm-scheduled-tab"
+      data-tab="scheduled">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1rem; height: 1rem;">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      Scheduled
+      <span class="sqm-tab-count" id="sqm-scheduled-count">0</span>
+    </button>
+
+    <button
+      class="sqm-tab"
+      role="tab"
+      aria-selected="false"
+      aria-controls="sqm-retries-panel"
+      id="sqm-retries-tab"
+      data-tab="retries">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1rem; height: 1rem;">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+      </svg>
+      Retries
+      <span class="sqm-tab-count" id="sqm-retries-count">0</span>
+    </button>
+
+    <button
+      class="sqm-tab"
+      role="tab"
+      aria-selected="false"
+      aria-controls="sqm-dead-panel"
+      id="sqm-dead-tab"
+      data-tab="dead">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1rem; height: 1rem;">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+      </svg>
+      Dead
+      <span class="sqm-tab-count" id="sqm-dead-count">0</span>
+    </button>
+  </nav>
+
+  <!-- Tab Panels -->
+  <div class="sqm-tab-content">
+    <!-- Queues Panel -->
+    <div
+      class="sqm-tab-panel sqm-tab-panel-active"
+      role="tabpanel"
+      aria-labelledby="sqm-queues-tab"
+      id="sqm-queues-panel">
+      <section class="sqm-queues-section" aria-label="Queue Details">
+        <div class="sqm-table-container">
+          <table class="sqm-table" id="sqm-queues-table">
+            <thead>
+              <tr>
+                <th scope="col">Queue Name</th>
+                <th scope="col" style="text-align: right;">Size</th>
+                <th scope="col" style="text-align: right;">Workers/Limits</th>
+                <th scope="col" style="text-align: right;">Latency</th>
+                <th scope="col" style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="sqm-table-body">
+              <!-- Queue rows will be inserted here by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
-  </section>
+
+    <!-- Scheduled Jobs Panel -->
+    <div
+      class="sqm-tab-panel sqm-hidden"
+      role="tabpanel"
+      aria-labelledby="sqm-scheduled-tab"
+      id="sqm-scheduled-panel">
+      <section class="sqm-scheduled-section" aria-label="Scheduled Jobs">
+        <!-- Scheduled Jobs Controls -->
+        <div class="sqm-section-controls">
+          <div class="sqm-controls-left">
+            <input
+              type="text"
+              id="sqm-scheduled-filter"
+              class="sqm-filter-input"
+              placeholder="Filter by job class..."
+              aria-label="Filter scheduled jobs">
+            <button id="sqm-scheduled-apply-filter" class="sqm-btn sqm-btn-secondary">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1rem; height: 1rem;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
+              </svg>
+              Filter
+            </button>
+          </div>
+          <div class="sqm-controls-right">
+            <button id="sqm-clear-scheduled-btn" class="sqm-btn sqm-btn-destructive">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1rem; height: 1rem;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+              </svg>
+              Clear All
+            </button>
+          </div>
+        </div>
+
+        <div class="sqm-table-container">
+          <table class="sqm-table" id="sqm-scheduled-table">
+            <thead>
+              <tr>
+                <th scope="col">Job Class</th>
+                <th scope="col">Queue</th>
+                <th scope="col" style="text-align: right;">Scheduled At</th>
+                <th scope="col" style="text-align: right;">Time Until</th>
+                <th scope="col" style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="sqm-scheduled-table-body">
+              <!-- Scheduled job rows will be inserted here by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="sqm-pagination" id="sqm-scheduled-pagination">
+          <!-- Pagination controls will be inserted here by JavaScript -->
+        </div>
+      </section>
+    </div>
+
+    <!-- Retry Jobs Panel -->
+    <div
+      class="sqm-tab-panel sqm-hidden"
+      role="tabpanel"
+      aria-labelledby="sqm-retries-tab"
+      id="sqm-retries-panel">
+      <section class="sqm-retries-section" aria-label="Retry Jobs">
+        <!-- Retry Jobs Controls -->
+        <div class="sqm-section-controls">
+          <div class="sqm-controls-left">
+            <input
+              type="text"
+              id="sqm-retries-filter"
+              class="sqm-filter-input"
+              placeholder="Filter by job class..."
+              aria-label="Filter retry jobs">
+            <button id="sqm-retries-apply-filter" class="sqm-btn sqm-btn-secondary">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1rem; height: 1rem;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
+              </svg>
+              Filter
+            </button>
+          </div>
+          <div class="sqm-controls-right">
+            <button id="sqm-retry-all-btn" class="sqm-btn sqm-btn-success">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1rem; height: 1rem;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+              </svg>
+              Retry All
+            </button>
+            <button id="sqm-clear-retries-btn" class="sqm-btn sqm-btn-destructive">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1rem; height: 1rem;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+              </svg>
+              Clear All
+            </button>
+          </div>
+        </div>
+
+        <div class="sqm-table-container">
+          <table class="sqm-table" id="sqm-retries-table">
+            <thead>
+              <tr>
+                <th scope="col">Job Class</th>
+                <th scope="col">Queue</th>
+                <th scope="col" style="text-align: right;">Failed At</th>
+                <th scope="col" style="text-align: right;">Retry At</th>
+                <th scope="col" style="text-align: right;">Attempts</th>
+                <th scope="col" style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="sqm-retries-table-body">
+              <!-- Retry job rows will be inserted here by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="sqm-pagination" id="sqm-retries-pagination">
+          <!-- Pagination controls will be inserted here by JavaScript -->
+        </div>
+      </section>
+    </div>
+
+    <!-- Dead Jobs Panel -->
+    <div
+      class="sqm-tab-panel sqm-hidden"
+      role="tabpanel"
+      aria-labelledby="sqm-dead-tab"
+      id="sqm-dead-panel">
+      <section class="sqm-dead-section" aria-label="Dead Jobs">
+        <!-- Dead Jobs Controls -->
+        <div class="sqm-section-controls">
+          <div class="sqm-controls-left">
+            <input
+              type="text"
+              id="sqm-dead-filter"
+              class="sqm-filter-input"
+              placeholder="Filter by job class..."
+              aria-label="Filter dead jobs">
+            <button id="sqm-dead-apply-filter" class="sqm-btn sqm-btn-secondary">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1rem; height: 1rem;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
+              </svg>
+              Filter
+            </button>
+          </div>
+          <div class="sqm-controls-right">
+            <button id="sqm-resurrect-all-btn" class="sqm-btn sqm-btn-info">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1rem; height: 1rem;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103-.212-.202-.426-.297-.642m-.838 2.956c.138-.78.404-1.476.804-2.031a4.73 4.73 0 01.945-1.067m.02 2.4a5.54 5.54 0 01-.72.01" />
+              </svg>
+              Resurrect All
+            </button>
+            <button id="sqm-clear-dead-btn" class="sqm-btn sqm-btn-destructive">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1rem; height: 1rem;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+              </svg>
+              Clear All
+            </button>
+          </div>
+        </div>
+
+        <div class="sqm-table-container">
+          <table class="sqm-table" id="sqm-dead-table">
+            <thead>
+              <tr>
+                <th scope="col">Job Class</th>
+                <th scope="col">Queue</th>
+                <th scope="col" style="text-align: right;">Failed At</th>
+                <th scope="col" style="text-align: right;">Attempts</th>
+                <th scope="col" style="text-align: right;">Error</th>
+                <th scope="col" style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="sqm-dead-table-body">
+              <!-- Dead job rows will be inserted here by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="sqm-pagination" id="sqm-dead-pagination">
+          <!-- Pagination controls will be inserted here by JavaScript -->
+        </div>
+      </section>
+    </div>
+  </div>
 </div>
 
 <!-- Empty State (when no queues) -->
