@@ -17,7 +17,7 @@ module SidekiqQueueManager
     before_action :set_queue_name, only: %i[
       queue_status pause_queue resume_queue jobs delete_job
       set_limit remove_limit set_process_limit remove_process_limit
-      block unblock clear
+      block unblock clear delete_queue
     ]
 
     # Comprehensive error handling for all controller actions
@@ -243,6 +243,17 @@ module SidekiqQueueManager
     # POST /queues/:name/clear
     def clear
       result = QueueService.clear_queue(@queue_name)
+      render json: api_response(
+        success: result[:success],
+        message: result[:message],
+        data: result[:data]
+      ), status: result[:success] ? :ok : :unprocessable_entity
+    end
+
+    # Delete a queue completely
+    # DELETE /queues/:name
+    def delete_queue
+      result = QueueService.delete_queue(@queue_name)
       render json: api_response(
         success: result[:success],
         message: result[:message],

@@ -31,6 +31,7 @@ SidekiqQueueManager::Engine.routes.draw do
   get '/queues/:name/jobs', to: 'dashboard#jobs', as: :queue_jobs
   delete '/queues/:name/delete_job', to: 'dashboard#delete_job', as: :delete_queue_job
   post '/queues/:name/clear', to: 'dashboard#clear', as: :clear_queue
+  delete '/queues/:name', to: 'dashboard#delete_queue', as: :delete_queue
 
   # Queue limits and configuration
   post '/queues/:name/set_limit', to: 'dashboard#set_limit', as: :set_queue_limit

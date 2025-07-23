@@ -202,7 +202,16 @@ module SidekiqQueueManager
 
           queue = Sidekiq::Queue[queue_name]
           operation = method_name.split('_')[0] # 'set', 'remove', 'block', 'unblock'
-          attribute = method_name.match(/_(queue_|process_)?(.+)$/)[2] # 'limit', 'process_limit'
+
+          # Extract the correct attribute name based on the method
+          attribute = case method_name
+                      when /set_queue_limit|remove_queue_limit/
+                        'limit' # queue.limit for queue limits
+                      when /set_process_limit|remove_process_limit/
+                        'process_limit' # queue.process_limit for process limits
+                      else
+                        method_name.split('_', 2)[1] # fallback for block/unblock operations
+                      end
 
           perform_queue_operation(queue, queue_name, operation, attribute, *args)
         rescue StandardError => e
@@ -224,18 +233,42 @@ module SidekiqQueueManager
         handle_service_error(e, "clear queue '#{queue_name}'")
       end
 
+      def delete_queue(queue_name)
+        return failure_response('Invalid queue name') unless valid_queue?(queue_name)
+        return failure_response('Cannot delete critical queue') if critical_queue?(queue_name)
+
+        queue = Sidekiq::Queue[queue_name]
+        jobs_count = queue.size
+
+        # Clear all jobs first
+        queue.clear
+
+        # Complete cleanup of queue from Redis
+        Sidekiq.redis do |conn|
+          # Remove queue from the queues set
+          conn.srem('queues', queue_name)
+
+          # Delete the actual queue key from Redis
+          conn.del("queue:#{queue_name}")
+
+          # Clean up any related keys (like paused queue markers)
+          conn.del("queue:#{queue_name}:paused")
+        end
+
+        log_operation("Queue '#{queue_name}' deleted completely - #{jobs_count} jobs removed")
+        success_response("Queue '#{queue_name}' deleted successfully", jobs_cleared: jobs_count)
+      rescue StandardError => e
+        handle_service_error(e, "delete queue '#{queue_name}'")
+      end
+
       private
 
       # ========================================
       # Queue Information Helpers
       # ========================================
 
-      def available_queues
-        @available_queues ||= discover_queues
-      end
-
       # Ruby's functional approach to queue discovery
-      def discover_queues
+      def available_queues
         [
           # Method 1: Sidekiq's built-in discovery
           -> { Sidekiq::Queue.all.map(&:name) },

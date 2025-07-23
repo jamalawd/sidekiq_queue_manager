@@ -755,6 +755,9 @@ class SidekiqQueueManagerUI {
           <button class="sqm-actions-menu-item sqm-actions-danger" data-action="clear" data-queue="${queueName}">
             🗑️ Clear All Jobs
           </button>
+          <button class="sqm-actions-menu-item sqm-actions-danger" data-action="delete_queue" data-queue="${queueName}">
+            ❌ Delete Queue
+          </button>
         </div>
       </div>
     `;
@@ -847,6 +850,8 @@ class SidekiqQueueManagerUI {
         return this.unblockQueue(queueName);
       case 'clear':
         return this.clearQueue(queueName);
+      case 'delete_queue':
+        return this.deleteQueue(queueName);
       default:
         throw new Error(`Unknown action: ${action}`);
     }
@@ -1388,6 +1393,52 @@ class SidekiqQueueManagerUI {
       }
     } catch (error) {
       this.showNotification(`Failed to clear queue: ${error.message}`, 'error');
+    }
+  }
+
+  async deleteQueue(queueName) {
+    const confirmed = await this.showCustomConfirm(
+      'Delete Queue Completely',
+      `Are you sure you want to PERMANENTLY DELETE the "${queueName}" queue?`,
+      'danger',
+      'This action will remove the queue completely from Sidekiq, along with all its jobs. This cannot be undone.'
+    );
+
+    if (!confirmed) return;
+
+    // Triple confirmation for queue deletion (more destructive than clearing)
+    const doubleConfirmed = await this.showCustomConfirm(
+      'Final Warning',
+      `This will PERMANENTLY DELETE the entire "${queueName}" queue!`,
+      'danger',
+      'The queue will be completely removed from Sidekiq and cannot be recovered.'
+    );
+
+    if (!doubleConfirmed) return;
+
+    const confirmation = await this.showCustomPrompt(
+      'Type Queue Name to Confirm',
+      `Type "${queueName}" exactly to confirm queue deletion:`,
+      queueName,
+      'This is your last chance to cancel this destructive operation.'
+    );
+
+    if (confirmation !== queueName) {
+      this.showNotification('Queue deletion cancelled', 'info');
+      return;
+    }
+
+    try {
+      const response = await this.apiCall(`/queues/${queueName}`, { method: 'DELETE' });
+
+      if (response.success) {
+        this.showNotification(`Queue "${queueName}" deleted permanently`, 'success');
+        await this.refreshQueues();
+      } else {
+        throw new Error(response.message || 'Failed to delete queue');
+      }
+    } catch (error) {
+      this.showNotification(`Failed to delete queue: ${error.message}`, 'error');
     }
   }
 
